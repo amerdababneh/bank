@@ -1,0 +1,86 @@
+@font-face {
+  font-family: 'Baloo Bhaijaan 2';
+  src: url('/fonts/BalooBhaijaan2.woff2') format('woff2');
+  font-weight: 400 800;
+  font-display: swap;
+}
+
+:root {
+  /* overwritten from data/brand.json at startup */
+  --c-primary: #7a1f3d;
+  --c-secondary: #f4ede1;
+  --c-accent: #d9a441;
+  --font: 'Baloo Bhaijaan 2', 'Segoe UI', Tahoma, Arial, sans-serif;
+  --safe-t: env(safe-area-inset-top, 0px);
+  --safe-r: env(safe-area-inset-right, 0px);
+  --safe-b: env(safe-area-inset-bottom, 0px);
+  --safe-l: env(safe-area-inset-left, 0px);
+}
+
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
+  background: var(--c-primary);
+  color: #2b1d12;
+  font-family: var(--font);
+  direction: rtl;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+#c {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  touch-action: none;
+}
+
+#ui {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  padding: var(--safe-t) var(--safe-r) var(--safe-b) var(--safe-l);
+}
+#ui > * { pointer-events: auto; }
+
+#loader {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  color: var(--c-secondary);
+  text-align: center;
+  background: radial-gradient(circle at 50% 35%, color-mix(in srgb, var(--c-primary) 82%, white), var(--c-primary) 70%);
+  transition: opacity 0.4s ease;
+}
+#loader.done { opacity: 0; pointer-events: none; }
+#loader h1 { margin: 0; font-size: clamp(30px, 8vw, 54px); font-weight: 800; }
+#loader p { margin: 0; font-size: 18px; opacity: 0.85; }
+#ld-logo { width: 96px; height: 96px; object-fit: contain; }
+#ld-short { font-size: 20px; font-weight: 700; letter-spacing: 3px; color: var(--c-accent); direction: ltr; }
+.ld-bar {
+  width: min(70vw, 360px);
+  height: 14px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.22);
+  overflow: hidden;
+}
+.ld-bar i {
+  display: block;
+  height: 100%;
+  width: 0;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--c-accent), color-mix(in srgb, var(--c-accent) 60%, white));
+  transition: width 0.25s ease;
+}

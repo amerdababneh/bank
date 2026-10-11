@@ -1,0 +1,6 @@
+{
+  "bankName": "مصرف قطر الإسلامي",
+  "short": "QIB",
+  "colors": { "primary": "#7a1f3d", "secondary": "#f4ede1", "accent": "#d9a441" },
+  "logo": "/brand/logo.svg"
+}

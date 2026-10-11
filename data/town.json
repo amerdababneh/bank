@@ -1,0 +1,15 @@
+{
+  "tile": 8,
+  "map": [
+    "SSSSSSSSSSSS",
+    "~~~~~~~~~~~~",
+    "~~~D~~~~~~~~",
+    "CCCCCCCCCCCC",
+    "P.RRRRRRRR.P",
+    "hhR..BB..Rkk",
+    "..RP.BB.PR..",
+    "P.RRRRRRRR.P",
+    "yss.tsss.css",
+    "RRRRRRRRRRRR"
+  ]
+}

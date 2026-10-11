@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "deny": [
+      "Read(./public/models/**)",
+      "Read(./public/assets/**)",
+      "Read(./public/audio/**)",
+      "Read(./public/fonts/**)",
+      "Read(./public/brand/**)",
+      "Read(./public/icons/**)",
+      "Read(./art/**)",
+      "Read(./dist/**)"
+    ]
+  }
+}

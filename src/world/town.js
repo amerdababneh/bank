@@ -1,0 +1,191 @@
+// Builds the town from data/town.json (ASCII grid) + data/tiles.json (char -> builder).
+// Returns { group, colliders, pois, bounds, spawn, anchors, water, size }.
+import { Group, Box3, Vector3, PlaneGeometry } from 'three/webgpu';
+import { createBatch, makeInstanced } from './geo.js';
+import { makeLit, makeUnlit, makeBlobMaterial, litFromGltf } from './light.js';
+import { makeSign } from './signs.js';
+import { palmGeometries, lampGeometry, dhow } from './props.js';
+import { road, corniche } from './grounds.js';
+import { souq, bakery, karak, store } from './buildings.js';
+import { bank } from './bankfront.js';
+import { skyline } from './skyline.js';
+
+const BUILDERS = { road, corniche, dhow, souq, bakery, karak, store, bank, skyline };
+// facade direction -> rotation about Y; +z (south) faces the camera
+const FACES = { S: 0, W: -Math.PI / 2, E: Math.PI / 2, N: Math.PI };
+const AUTO_ORDER = ['S', 'W', 'E', 'N'];
+const APRON = 300;
+
+// Walkable area = bounding box of every non-void tile.
+export function computeBounds(town, tiles) {
+  const T = town.tile, xs = [], zs = [];
+  town.map.forEach((row, z) => [...row].forEach((ch, x) => { if (!tiles.tiles[ch]?.void) { xs.push(x); zs.push(z); } }));
+  return { minX: Math.min(...xs) * T, maxX: (Math.max(...xs) + 1) * T, minZ: Math.min(...zs) * T, maxZ: (Math.max(...zs) + 1) * T };
+}
+
+export const modelNames = (tiles) => Object.values(tiles.tiles).map((d) => d.model).filter(Boolean);
+
+export function buildTown({ town, tiles, brand, quality, models = {} }) {
+  const T = town.tile, rows = town.map, D = rows.length, W = rows[0].length;
+  const defs = tiles.tiles, grounds = tiles.grounds;
+  const group = new Group();
+  const b = createBatch();
+  const materials = { lit: makeLit({ vertexColors: true }), unlit: makeUnlit(), water: makeLit({ vertexColors: true, shadows: false }) };
+  const palms = [], lamps = [], contacts = [], colliders = [], pois = [], anchors = {};
+  let spawn = new Vector3(W * T / 2, 0, D * T / 2);
+
+  const charAt = (x, z) => rows[z]?.[x];
+  const def = (x, z) => defs[charAt(x, z)];
+  const hash = (x, z) => Math.abs(Math.sin(x * 12.9898 + z * 78.233) * 43758.5453) % 1;
+  const box3 = (x0, z0, x1, z1, h = 6) => new Box3(new Vector3(x0, 0, z0), new Vector3(x1, h, z1));
+
+  const c = {
+    b, brand, materials, group, anchors, top: 0,
+    is: (ch, x, z) => charAt(x, z) === ch,
+    def,
+    sign(text, w, h, lx, ly, lz, style) {
+      const m = makeSign(text, w, h, style), p = b.world(lx, lz);
+      m.position.set(p.x, ly, p.z);
+      m.rotation.y = b.frame.ry;
+      group.add(m);
+    },
+    anchor(name, lx, ly, lz) {
+      const p = b.world(lx, lz);
+      anchors[name] = new Vector3(p.x, ly, p.z);
+    },
+    palm(lx, lz) {
+      const p = b.world(lx, lz), h = hash(p.x, p.z);
+      palms.push({ x: p.x, y: c.top, z: p.z, ry: h * 6.28, s: 0.9 + h * 0.3 });
+      colliders.push(box3(p.x - 0.4, p.z - 0.4, p.x + 0.4, p.z + 0.4));
+      contacts.push({ x: p.x, z: p.z, sx: 3.2, sz: 3.2 });
+    },
+    lamp(lx, lz) {
+      const p = b.world(lx, lz);
+      lamps.push({ x: p.x, y: c.top, z: p.z, ry: 0 });
+    },
+  };
+
+  // ground (one box per tile; water lives in its own material kind)
+  const rect = (kind, hex, x0, z0, x1, z1, top, thick = 1) =>
+    b.box(kind, hex, (x0 + x1) / 2, top - thick, (z0 + z1) / 2, x1 - x0, thick, z1 - z0);
+  b.at(0, 0, 0);
+  let waterEnd = 0;
+  for (let z = 0; z < D; z++) {
+    for (let x = 0; x < W; x++) {
+      const d = def(x, z), g = grounds[d?.ground];
+      if (!g) continue;
+      const hex = Array.isArray(g.color) ? g.color[(x + z) & 1] : g.color;
+      rect(d.water ? 'water' : 'lit', hex, x * T, z * T, (x + 1) * T, (z + 1) * T, g.top);
+      if (d.water) waterEnd = Math.max(waterEnd, (z + 1) * T);
+    }
+  }
+  const { land, water } = tiles.apron, A = APRON, MW = W * T, MD = D * T;
+  rect('water', water, -A, -A, MW + A, waterEnd, grounds.water.top);
+  rect('water', water, -A, waterEnd, 0, MD + A, grounds.water.top);
+  rect('water', water, MW, waterEnd, MW + A, MD + A, grounds.water.top);
+  rect('lit', land, 0, MD, MW, MD + A, 0.06);
+
+  // connected components of identical `span` letters become one building
+  const seen = new Set();
+  const comps = [];
+  for (let z = 0; z < D; z++) {
+    for (let x = 0; x < W; x++) {
+      const ch = charAt(x, z), d = defs[ch];
+      if (!d) { console.warn(`town: unknown tile '${ch}' at ${x},${z}`); continue; }
+      if (seen.has(z * W + x)) continue;
+      const cells = [[x, z]], stack = [[x, z]];
+      seen.add(z * W + x);
+      while (d.span && stack.length) {
+        const [px, pz] = stack.pop();
+        for (const [nx, nz] of [[px + 1, pz], [px - 1, pz], [px, pz + 1], [px, pz - 1]]) {
+          if (charAt(nx, nz) !== ch || seen.has(nz * W + nx)) continue;
+          seen.add(nz * W + nx);
+          cells.push([nx, nz]);
+          stack.push([nx, nz]);
+        }
+      }
+      comps.push({ ch, d, cells });
+    }
+  }
+
+  const walkable = (x, z) => !!def(x, z)?.walk;
+  for (const { ch, d, cells } of comps) {
+    const x0 = Math.min(...cells.map((p) => p[0])), x1 = Math.max(...cells.map((p) => p[0]));
+    const z0 = Math.min(...cells.map((p) => p[1])), z1 = Math.max(...cells.map((p) => p[1]));
+    const sides = {
+      S: Array.from({ length: x1 - x0 + 1 }, (_, i) => walkable(x0 + i, z1 + 1)),
+      N: Array.from({ length: x1 - x0 + 1 }, (_, i) => walkable(x0 + i, z0 - 1)),
+      E: Array.from({ length: z1 - z0 + 1 }, (_, i) => walkable(x1 + 1, z0 + i)),
+      W: Array.from({ length: z1 - z0 + 1 }, (_, i) => walkable(x0 - 1, z0 + i)),
+    };
+    const face = d.face ?? AUTO_ORDER.find((s) => sides[s].some(Boolean)) ?? 'S';
+    const ry = FACES[face];
+    const bw0 = (x1 - x0 + 1) * T, bd0 = (z1 - z0 + 1) * T, side = face === 'S' || face === 'N';
+    const w = side ? bw0 : bd0, dep = side ? bd0 : bw0;
+    const bd = Math.min(dep - 1.2, d.maxDepth ?? 99), bwid = Math.min(w - 1, d.maxWidth ?? 99);
+    const r = {
+      tx: x0, tz: z0, cx: ((x0 + x1 + 1) / 2) * T, cz: ((z0 + z1 + 1) / 2) * T, w, d: dep, bw: bwid, bd,
+      zb: -dep / 2 + 0.6, zf: -dep / 2 + 0.6 + bd,
+    };
+    c.top = grounds[d.ground]?.top ?? 0;
+    b.at(r.cx, r.cz, ry);
+    const model = d.model && models[d.model];
+    if (model) placeModel(model, r, ry);
+    else BUILDERS[d.build]?.(c, d, r);
+    if (d.palm) c.palm(0, 0);
+
+    for (const p of d.pois ?? []) {
+      const q = b.world(p.side, r.zf + p.front);
+      pois.push({ id: p.id, pos: new Vector3(q.x, 0, q.z), radius: p.r });
+    }
+    if (d.spawn) {
+      const q = b.world(0, r.zf + d.spawn.front);
+      spawn = new Vector3(q.x, 0, q.z);
+    }
+    if (d.solid) {
+      const xs = [], zs = [];
+      for (const [lx, lz] of [[-bwid / 2, r.zb], [bwid / 2, r.zb], [-bwid / 2, r.zf], [bwid / 2, r.zf]]) {
+        const q = b.world(lx, lz);
+        xs.push(q.x);
+        zs.push(q.z);
+      }
+      colliders.push(box3(Math.min(...xs), Math.min(...zs), Math.max(...xs), Math.max(...zs)));
+      const q = b.world(0, (r.zb + r.zf) / 2);
+      contacts.push({ x: q.x, z: q.z, sx: (side ? bwid : bd) + 3, sz: (side ? bd : bwid) + 3 });
+    }
+  }
+
+  // GLB replaces the primitive building: fitted into the footprint, re-lit with fakeSun
+  function placeModel(src, r, ry) {
+    const m = litFromGltf(src.clone(true));
+    const box = new Box3().setFromObject(m), size = box.getSize(new Vector3()), ctr = box.getCenter(new Vector3());
+    const s = Math.min(r.bw / size.x, r.bd / size.z);
+    m.scale.setScalar(s);
+    m.position.set(-ctr.x * s, -box.min.y * s, (r.zb + r.zf) / 2 - ctr.z * s);
+    m.traverse((o) => { o.castShadow = o.isMesh; });
+    const holder = new Group();
+    holder.position.set(b.frame.x, 0, b.frame.z);
+    holder.rotation.y = ry;
+    holder.add(m);
+    group.add(holder);
+  }
+
+  const built = b.build(materials);
+  group.add(built);
+
+  // instanced palms / lamps; low tier gets fake contact-shadow quads instead of a shadow map
+  const litMat = materials.lit;
+  if (palms.length) {
+    const g = palmGeometries();
+    group.add(makeInstanced(g.trunk, litMat, palms), makeInstanced(g.crown, litMat, palms));
+  }
+  if (lamps.length) group.add(makeInstanced(lampGeometry(), litMat, lamps));
+  if (!quality.shadows && contacts.length) {
+    const quad = new PlaneGeometry(1, 1).rotateX(-Math.PI / 2);
+    const blobs = makeInstanced(quad, makeBlobMaterial(), contacts.map((p) => ({ ...p, y: 0.1, sy: 1 })), false);
+    group.add(blobs);
+  }
+
+  const bounds = computeBounds(town, tiles);
+  return { group, colliders, pois, bounds, spawn, anchors, water: built.getObjectByName('water'), size: { w: MW, d: MD } };
+}

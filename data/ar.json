@@ -1,0 +1,16 @@
+{
+  "app.name": "المدّخر الصغير",
+  "loading.text": "جارٍ تجهيز المدينة…",
+  "loading.error": "تعذّر تشغيل اللعبة على هذا الجهاز",
+  "sign.bakery": "المخبز",
+  "sign.karak": "كشك الكرك",
+  "sign.sweets": "حلويات",
+  "sign.toys": "ألعاب",
+  "sign.clothes": "ملابس",
+  "sign.atm": "صراف آلي",
+  "sign.souq.1": "عطور",
+  "sign.souq.2": "بهارات",
+  "sign.souq.3": "تحف",
+  "sign.souq.4": "سجّاد",
+  "sign.souq.5": "قهوة"
+}
