@@ -4,9 +4,9 @@
     "plaza": {"color": ["#dccaa4", "#d3bf97"], "top": 0.06},
     "corniche": {"color": ["#e6dcc6", "#dccfb4"], "top": 0.12},
     "land": {"color": "#cdb58a", "top": 0.06},
-    "water": {"color": "#2e9bb5", "top": -0.8}
+    "water": {"color": "#5ec4e4", "top": -0.8}
   },
-  "apron": {"land": "#cdb58a", "water": "#2e9bb5"},
+  "apron": {"land": "#cdb58a", "water": "#5ec4e4"},
   "tiles": {
     "S": {"build": "skyline", "ground": "land", "span": true, "void": true},
     "~": {"build": "none", "ground": "water", "water": true, "void": true},

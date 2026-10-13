@@ -2,16 +2,25 @@ import { WebGPURenderer, Scene } from 'three/webgpu';
 import { applyI18n, t } from './i18n.js';
 import { quality, detectTier, applyTier, frameGate, adaptResolution, createDebug } from './quality.js';
 import { createCameraRig } from './camera.js';
+import { createPost, initFx, onFx, postActive, createWind, uWindCenter } from './world/fx.js';
+import { createParticles } from './world/particles.js';
+import { PLAYER_LAYER } from './world/light.js';
+import { initFxPanel } from './ui/fxpanel.js';
 import { setupSky, setupSun } from './world/light.js';
 import { buildTown, computeBounds, modelNames } from './world/town.js';
-import { loadModels } from './world/models.js';
+import { loadModels, loadGltf } from './world/models.js';
+import { createInput } from './input.js';
+import { createPlayer } from './player.js';
+import { buildBank } from './world/bank.js';
+import { initDoors } from './world/doors.js';
+import { initPoiButton } from './ui/poi.js';
 import { loadSignFont } from './world/signs.js';
 import brand from '../data/brand.json';
 import townData from '../data/town.json';
 import tiles from '../data/tiles.json';
 
 // Shared handles for later phases (player, UI, bank interior).
-export const game = { renderer: null, rig: null, scenes: {}, world: null };
+export const game = { renderer: null, rig: null, scenes: {}, world: null, worlds: {}, player: null };
 // Per-frame callbacks: fn(dtSeconds, nowSeconds). Called only on rendered frames.
 export const updaters = [];
 
@@ -19,6 +28,7 @@ let active = null;
 let paused = false;
 let last = 0;
 let tickDebug = () => {};
+let post = null; // used only while a post effect is switched on
 
 export const setRenderPaused = (p) => { paused = !!p; };
 
@@ -48,23 +58,16 @@ function resize() {
   game.rig?.setAspect(window.innerWidth / window.innerHeight);
 }
 
-// P1 temporary camera: slow sweep over the town until the player arrives in P2.
-function orbit(now) {
-  const { rig, world } = game;
-  rig.target.set(world.spawn.x + Math.sin(now * 0.05) * 36, 0, world.spawn.z - 4);
-  rig.yaw = Math.sin(now * 0.1) * 0.55;
-}
-
 function frame(now) {
   if (!frameGate(now)) return;
   const dt = Math.min(now - last, 100);
   last = now;
   const sec = now / 1000;
   for (const fn of updaters) fn(dt / 1000, sec);
-  orbit(sec);
   game.rig.update(dt / 1000);
   if (paused) return;
-  game.renderer.render(active, game.rig.camera);
+  if (post && postActive()) post.render(active);
+  else game.renderer.render(active, game.rig.camera);
   tickDebug(now);
   adaptResolution(game.renderer, dt);
 }
@@ -81,7 +84,9 @@ async function boot() {
   tickDebug = createDebug(renderer);
   progress(0.2);
 
-  const [, models] = await Promise.all([loadSignFont(), loadModels(modelNames(tiles), (p) => progress(0.2 + p * 0.3))]);
+  const [, models, boy, girl] = await Promise.all([
+    loadSignFont(), loadModels(modelNames(tiles), (p) => progress(0.2 + p * 0.3)), loadGltf('kid_boy'), loadGltf('kid_girl'),
+  ]);
   progress(0.5);
 
   const scene = new Scene();
@@ -91,13 +96,44 @@ async function boot() {
   scene.add(world.group);
   game.scenes.town = scene;
   game.world = world;
+  const bank = buildBank({ brand });
+  game.scenes.bank = bank.scene;
+  game.worlds = { town: world, bank };
   progress(0.7);
 
   game.rig = createCameraRig();
-  game.rig.target.copy(world.spawn);
+  game.rig.camera.layers.enable(PLAYER_LAYER);
   resize();
+
+  const input = createInput({ canvas: $('c'), host: $('ui'), camera: game.rig.camera });
+  const player = createPlayer({ input, rig: game.rig, glbs: { boy, girl } });
+  game.player = player;
+  player.setLook('boy', 0);
+  player.setWorld(world);
+  player.teleport(world.spawn.x, world.spawn.z, Math.PI); // facing the bank, camera behind
+  scene.add(player.group);
+  updaters.push(player.update);
+  initDoors({ game, player, input, setActiveScene });
+  initPoiButton($('ui'));
+
+  post = createPost(renderer, game.rig.camera, { outlined: player.outlined });
+  const fx = createParticles({ pois: world.pois, bounds: world.bounds, budget: quality.particles });
+  scene.add(fx.group);
+  const wind = createWind(quality);
+  scene.add(wind.ribbons, wind.leaves);
+  onFx((name, on) => { fx.set(name, on); wind.set(name, on); });
+  updaters.push((dt, now) => {
+    const sc = player.group.parent; // dust follows the player between scenes
+    if (sc && fx.dust.parent !== sc) sc.add(fx.dust);
+    fx.update(dt, now, player.feet, player.speed);
+    uWindCenter.value.copy(player.feet);
+  });
+  initFx(quality);
+  initFxPanel();
+
   setActiveScene(scene, 'town');
   await renderer.compileAsync(scene, game.rig.camera);
+  await renderer.compileAsync(bank.scene, game.rig.camera);
   progress(1);
 
   window.addEventListener('resize', resize);

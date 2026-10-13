@@ -1,0 +1,10 @@
+{
+  "bank_door": {"icon": "🏦"},
+  "bank_exit": {"icon": "🚪"},
+  "atm_out": {"icon": "🏧"},
+  "bakery": {"icon": "🥖"},
+  "karak": {"icon": "☕"},
+  "store_sweets": {"icon": "🍦"},
+  "store_toys": {"icon": "🧸"},
+  "store_clothes": {"icon": "👕"}
+}

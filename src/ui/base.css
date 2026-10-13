@@ -84,3 +84,91 @@ html, body {
   background: linear-gradient(90deg, var(--c-accent), color-mix(in srgb, var(--c-accent) 60%, white));
   transition: width 0.25s ease;
 }
+
+/* ---- P2: joystick, POI button, scene fade, ---- */
+.joy {
+  position: fixed;
+  display: none;
+  width: 128px;
+  height: 128px;
+  translate: -50% -50%;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.22);
+  border: 3px solid rgba(255, 255, 255, 0.5);
+}
+#ui > .joy { pointer-events: none; }
+.joy.on { display: block; }
+.joy i {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 60px;
+  height: 60px;
+  margin: -30px 0 0 -30px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #fff, color-mix(in srgb, var(--c-accent) 70%, white));
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+  pointer-events: none;
+}
+
+.poi-btn {
+  position: fixed;
+  right: calc(var(--safe-r) + 22px);
+  bottom: calc(var(--safe-b) + 26px);
+  min-width: 96px;
+  min-height: 96px;
+  padding: 8px 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border: 4px solid #fff;
+  border-radius: 28px;
+  font-family: var(--font);
+  color: #fff;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--c-primary) 75%, white), var(--c-primary));
+  box-shadow: 0 6px 0 color-mix(in srgb, var(--c-primary) 60%, black), 0 10px 18px rgba(0, 0, 0, 0.3);
+  animation: poi-bounce 0.9s ease-in-out infinite;
+}
+.poi-btn[hidden] { display: none; }
+.poi-btn span { font-size: 44px; line-height: 1.1; }
+.poi-btn small { font-size: 16px; font-weight: 700; }
+.poi-btn:active { transform: scale(0.94); }
+@keyframes poi-bounce { 50% { translate: 0 -10px; } }
+
+#fade {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  background: var(--c-primary);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+#fade.on { opacity: 1; pointer-events: auto; }
+
+
+/* ?fx developer panel */
+.fxp {
+  position: fixed;
+  top: calc(var(--safe-t) + 4px);
+  right: calc(var(--safe-r) + 4px);
+  z-index: 60;
+  max-height: 90vh;
+  overflow: auto;
+  padding: 6px 8px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.7);
+  color: #fff;
+  font: 13px/1.6 system-ui, sans-serif;
+  direction: ltr;
+  text-align: left;
+}
+.fxp button { width: 100%; font: inherit; font-weight: 700; color: #fff; background: none; border: 0; text-align: left; }
+.fxp label { display: block; white-space: nowrap; padding: 2px 0; }
+.fxp input { width: 18px; height: 18px; vertical-align: middle; }
+.fxp i { font-style: normal; font-size: 11px; padding: 0 5px; border-radius: 6px; }
+.fxp .c-cheap { background: #2e7d32; }
+.fxp .c-mid { background: #b28704; }
+.fxp .c-high { background: #c25e00; }
+.fxp .c-demo { background: #b71c1c; }

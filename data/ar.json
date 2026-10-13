@@ -12,5 +12,13 @@
   "sign.souq.2": "بهارات",
   "sign.souq.3": "تحف",
   "sign.souq.4": "سجّاد",
-  "sign.souq.5": "قهوة"
+  "sign.souq.5": "قهوة",
+  "poi.bank_door": "المصرف",
+  "poi.bank_exit": "الخروج",
+  "poi.atm_out": "الصراف الآلي",
+  "poi.bakery": "المخبز",
+  "poi.karak": "كشك الكرك",
+  "poi.store_sweets": "حلويات",
+  "poi.store_toys": "ألعاب",
+  "poi.store_clothes": "ملابس"
 }

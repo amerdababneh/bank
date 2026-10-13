@@ -1,0 +1,13 @@
+{
+  "skin": "#f1c9a0",
+  "eye": "#2b1d12",
+  "boy": {
+    "colors": ["#ffffff", "#e6f1fb", "#fff0c4", "#e4ecd9"],
+    "ghutra": "#ffffff",
+    "agal": "#1c1c1c"
+  },
+  "girl": {
+    "colors": ["#e8447f", "#7a4fd1", "#1f8a7a", "#f2a33a"],
+    "trim": "#ffe9a8"
+  }
+}

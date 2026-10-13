@@ -2,7 +2,7 @@
 // Returns { group, colliders, pois, bounds, spawn, anchors, water, size }.
 import { Group, Box3, Vector3, PlaneGeometry } from 'three/webgpu';
 import { createBatch, makeInstanced } from './geo.js';
-import { makeLit, makeUnlit, makeBlobMaterial, litFromGltf } from './light.js';
+import { makeLit, makeUnlit, makeBlobMaterial, litFromGltf, makeWater } from './light.js';
 import { makeSign } from './signs.js';
 import { palmGeometries, lampGeometry, dhow } from './props.js';
 import { road, corniche } from './grounds.js';
@@ -30,7 +30,7 @@ export function buildTown({ town, tiles, brand, quality, models = {} }) {
   const defs = tiles.tiles, grounds = tiles.grounds;
   const group = new Group();
   const b = createBatch();
-  const materials = { lit: makeLit({ vertexColors: true }), unlit: makeUnlit(), water: makeLit({ vertexColors: true, shadows: false }) };
+  const materials = { lit: makeLit({ vertexColors: true }), unlit: makeUnlit(), water: null }; // animated water is built once the shore line is known
   const palms = [], lamps = [], contacts = [], colliders = [], pois = [], anchors = {};
   let spawn = new Vector3(W * T / 2, 0, D * T / 2);
 
@@ -84,6 +84,7 @@ export function buildTown({ town, tiles, brand, quality, models = {} }) {
   rect('water', water, -A, waterEnd, 0, MD + A, grounds.water.top);
   rect('water', water, MW, waterEnd, MW + A, MD + A, grounds.water.top);
   rect('lit', land, 0, MD, MW, MD + A, 0.06);
+  materials.water = makeWater(grounds.water.color, waterEnd);
 
   // connected components of identical `span` letters become one building
   const seen = new Set();
@@ -176,8 +177,8 @@ export function buildTown({ town, tiles, brand, quality, models = {} }) {
   // instanced palms / lamps; low tier gets fake contact-shadow quads instead of a shadow map
   const litMat = materials.lit;
   if (palms.length) {
-    const g = palmGeometries();
-    group.add(makeInstanced(g.trunk, litMat, palms), makeInstanced(g.crown, litMat, palms));
+    const g = palmGeometries(), swayMat = makeLit({ vertexColors: true, sway: true });
+    group.add(makeInstanced(g.trunk, swayMat, palms), makeInstanced(g.crown, swayMat, palms));
   }
   if (lamps.length) group.add(makeInstanced(lampGeometry(), litMat, lamps));
   if (!quality.shadows && contacts.length) {
@@ -187,5 +188,6 @@ export function buildTown({ town, tiles, brand, quality, models = {} }) {
   }
 
   const bounds = computeBounds(town, tiles);
-  return { group, colliders, pois, bounds, spawn, anchors, water: built.getObjectByName('water'), size: { w: MW, d: MD } };
+  const groundAt = (x, z) => grounds[def(Math.floor(x / T), Math.floor(z / T))?.ground]?.top ?? 0;
+  return { group, colliders, pois, bounds, spawn, groundAt, anchors, water: built.getObjectByName('water'), size: { w: MW, d: MD } };
 }
