@@ -1,7 +1,7 @@
 // Interiors (bank, supermarket, ...): a W x D room built from data/<name>.json — size, colours, the
 // town door / exit POI ids, extra POIs and GLB furniture. Room spans x -W/2..W/2, z -D/2 (back wall)
 // .. D/2 (entrance, camera side). The camera looks in from +z, so there is no front wall mesh.
-import { Scene, Group, Mesh, BoxGeometry, PlaneGeometry, Box3, Vector3, Color, AnimationMixer } from 'three/webgpu';
+import { Scene, Group, Mesh, BoxGeometry, PlaneGeometry, CylinderGeometry, Box3, Vector3, Color, AnimationMixer } from 'three/webgpu';
 import { clone as cloneSkinned } from 'three/addons/utils/SkeletonUtils.js';
 import { makeLit, litFromGltf, setupInteriorShadow, makeBlobMaterial } from './light.js';
 import { makeInstanced } from './geo.js';
@@ -45,13 +45,15 @@ export function buildInterior({ brand, layout, models = {}, npcFbx = {}, quality
 
   const colliders = [
     ...furniture,
+    ...(layout.blockers ?? []).map((k) => new Box3(new Vector3(k.x0, 0, k.z0), new Vector3(k.x1, 6, k.z1))),
     new Box3(new Vector3(-W / 2 - 2, 0, -D / 2 - 2), new Vector3(W / 2 + 2, 6, -D / 2)),
     new Box3(new Vector3(-W / 2 - 2, 0, -D / 2), new Vector3(-W / 2, 6, D / 2)),
     new Box3(new Vector3(W / 2, 0, -D / 2), new Vector3(W / 2 + 2, 6, D / 2)),
   ];
   const pois = [
     { id: layout.exit, pos: new Vector3(0, 0, D / 2 - 1.2), radius: 2 },
-    ...(layout.pois ?? []).map((p) => ({ id: p.id, pos: new Vector3(p.x, 0, p.z), radius: p.r ?? 1.6 })),
+    // talk: { x, y, z } = the NPC's head, for cinematic conversations (see ui/dialog.js)
+    ...(layout.pois ?? []).map((p) => ({ id: p.id, pos: new Vector3(p.x, 0, p.z), radius: p.r ?? 1.6, talk: p.talk })),
   ];
   return {
     scene, group, colliders, pois, door: layout.door, exit: layout.exit,
@@ -103,7 +105,7 @@ function placeNpcs(layout, npcFbx, group, shadowNode) {
     m.traverse((o) => { o.frustumCulled = false; o.castShadow = o.isMesh; });
     box.setFromObject(m).getSize(size);
     m.scale.multiplyScalar((n.h ?? 1.75) / Math.max(0.01, size.y));
-    m.position.set(n.x, FLOOR_TOP, n.z);
+    m.position.set(n.x, FLOOR_TOP + (n.y ?? 0), n.z); // y: lift (e.g. so typing hands clear the desk)
     m.rotation.y = ((n.ry ?? 0) * Math.PI) / 180;
     group.add(m);
     const clip = src.animations[0];
@@ -112,6 +114,45 @@ function placeNpcs(layout, npcFbx, group, shadowNode) {
     mixer.clipAction(clip).play();
     mixer.setTime((i * 1.37) % clip.duration);
     mixers.push(mixer);
+    if (n.chair) addChair(m, n, group, shadowNode);
   });
   return mixers;
+}
+
+// Primitive office chair fitted to a seated NPC: seat just under the hips (measured in the animated
+// pose), backrest behind them, post + five-arm base to the floor. n.chair: true or a seat colour.
+let chairGeo = null;
+function addChair(npc, n, group, shadowNode) {
+  let hips = null;
+  npc.traverse((o) => { if (!hips && o.isBone && /hips/i.test(o.name)) hips = o; });
+  if (!hips) return;
+  npc.updateMatrixWorld(true);
+  const p = hips.getWorldPosition(new Vector3());
+  const ry = ((n.ry ?? 0) * Math.PI) / 180, bx = -Math.sin(ry), bz = -Math.cos(ry); // towards the back
+  const seatY = Math.max(FLOOR_TOP + 0.3, p.y - 0.14);
+  chairGeo ??= {
+    seat: new BoxGeometry(0.52, 0.08, 0.5), back: new BoxGeometry(0.5, 0.62, 0.07),
+    post: new CylinderGeometry(0.035, 0.035, 1, 8), arm: new BoxGeometry(0.05, 0.04, 0.32),
+  };
+  const lit = (hex) => makeLit({ color: new Color(hex), shadows: !!shadowNode, shadowNode });
+  const cloth = lit(typeof n.chair === 'string' ? n.chair : '#3d4a5c'), metal = lit('#a9b2ba');
+  const chair = new Group();
+  chair.position.set(p.x + bx * 0.04, 0, p.z + bz * 0.04);
+  chair.rotation.y = ry;
+  const add = (geo, mat, x, y, z, sy = 1, rotY = 0) => {
+    const o = new Mesh(geo, mat);
+    o.position.set(x, y, z);
+    o.scale.y = sy;
+    o.rotation.y = rotY;
+    o.castShadow = true;
+    chair.add(o);
+  };
+  add(chairGeo.seat, cloth, 0, seatY, 0);
+  add(chairGeo.back, cloth, 0, seatY + 0.38, -0.28);
+  add(chairGeo.post, metal, 0, (FLOOR_TOP + 0.06 + seatY) / 2, 0, seatY - FLOOR_TOP - 0.06);
+  for (let k = 0; k < 5; k++) {
+    const a = (k / 5) * Math.PI * 2;
+    add(chairGeo.arm, metal, Math.sin(a) * 0.16, FLOOR_TOP + 0.04, Math.cos(a) * 0.16, 1, a);
+  }
+  group.add(chair);
 }

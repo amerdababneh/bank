@@ -9,5 +9,6 @@
   "store_clothes": {"icon": "👕"},
   "market_door": {"icon": "🛒"},
   "market_exit": {"icon": "🚪"},
-  "market_checkout": {"icon": "🧾"}
+  "market_checkout": {"icon": "🧾"},
+  "teller": {"icon": "💬"}
 }

@@ -42,7 +42,7 @@ export function createGlbAvatar({ scene, animations }, extra = {}) {
   // the GLB's own baked clips win (they match its rig exactly); Mixamo FBX clips are the fallback
   const idleClip = pick(/idle/i) ?? rt('idle') ?? animations[0];
   const walkClip = pick(/walk|run/i) ?? rt('walk') ?? animations.find((c) => c !== idleClip) ?? idleClip;
-  const talkClip = rt('talk'); // kept for later: avatar.setTalking(true)
+  const talkClip = pick(/talk/i) ?? rt('talk'); // used in conversations: avatar.setTalking(true)
   const mixer = idleClip ? new AnimationMixer(model) : null;
   const same = idleClip === walkClip;
   const idle = mixer?.clipAction(idleClip).play();

@@ -23,6 +23,9 @@ export function createCameraRig() {
   const cur = { dist: PRESETS.town.dist * MOBILE_DIST, pitch: PRESETS.town.pitch };
   const rig = { camera, target, yaw: 0, aspect: 1, preset: PRESETS.town, base: 'town', mode: 'follow' };
   try { if (localStorage.getItem(MODE_KEY) === 'top') rig.mode = 'top'; } catch { /* ignore */ }
+  // cinematic shot: blends from the follow pose to (cinePos looking at cineLook) and back
+  const cinePos = new Vector3(), cineLook = new Vector3(), shotPos = new Vector3(), shotLook = new Vector3(), look0 = new Vector3();
+  let cineOn = false, blend = 0, snapShot = true;
 
   function applyFov() {
     const k = Math.min(PORTRAIT_MAX, Math.max(1, REF_ASPECT / rig.aspect));
@@ -35,7 +38,13 @@ export function createCameraRig() {
     const h = cur.dist * Math.cos(cur.pitch);
     const look = rig.preset.look;
     camera.position.set(focus.x + Math.sin(rig.yaw) * h, focus.y + cur.dist * Math.sin(cur.pitch) + look, focus.z + Math.cos(rig.yaw) * h);
-    camera.lookAt(focus.x, focus.y + look, focus.z);
+    look0.set(focus.x, focus.y + look, focus.z);
+    if (blend > 0.001) {
+      const b = blend * blend * (3 - 2 * blend); // smoothstep
+      camera.position.lerp(shotPos, b);
+      look0.lerp(shotLook, b);
+    }
+    camera.lookAt(look0);
   }
 
   rig.setAspect = (a) => {
@@ -55,10 +64,24 @@ export function createCameraRig() {
   };
   rig.update = (dt) => {
     const k = 1 - Math.exp(-dt * 8);
+    blend = Math.min(1, Math.max(0, blend + (cineOn ? dt : -dt) * 1.6));
+    const ks = snapShot ? 1 : 1 - Math.exp(-dt * 3); // glide between shots
+    shotPos.lerp(cinePos, ks);
+    shotLook.lerp(cineLook, ks);
+    snapShot = false;
     focus.lerp(target, k);
     cur.dist += (rig.preset.dist * MOBILE_DIST - cur.dist) * k;
     cur.pitch += (rig.preset.pitch - cur.pitch) * k;
     place();
+  };
+  // Cinematic: rig.shot(pos, look) cuts straight to a framed shot; rig.shot(null) cuts back.
+  rig.shot = (pos, lookAt) => {
+    if (!pos) { cineOn = false; blend = 0; return; } // hard cut back to the follow camera
+    snapShot = true; // hard cut between shots, like film editing
+    cineOn = true;
+    blend = 1;
+    cinePos.copy(pos);
+    cineLook.copy(lookAt);
   };
   // switch view; the rig eases to the new distance/pitch
   rig.setMode = (mode) => {

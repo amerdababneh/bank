@@ -1,0 +1,44 @@
+{
+  "note": "Conversations started from a POI with a talk point. who: npc | kid. text: ar.json key ({bank} = bank name, {name} = account name). next: event sent when the dialog ends (P4 opens that screen).",
+  "teller": {
+    "first": {
+      "when": "noAccount",
+      "next": "open_account",
+      "lines": [
+        {
+          "who": "npc",
+          "text": "dlg.teller.hello"
+        },
+        {
+          "who": "kid",
+          "text": "dlg.kid.save"
+        },
+        {
+          "who": "npc",
+          "text": "dlg.teller.explain"
+        },
+        {
+          "who": "npc",
+          "text": "dlg.teller.pin"
+        },
+        {
+          "who": "kid",
+          "text": "dlg.kid.ok"
+        }
+      ]
+    },
+    "again": {
+      "next": "bank",
+      "lines": [
+        {
+          "who": "npc",
+          "text": "dlg.teller.again"
+        },
+        {
+          "who": "kid",
+          "text": "dlg.kid.manage"
+        }
+      ]
+    }
+  }
+}

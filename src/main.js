@@ -23,6 +23,7 @@ import marketLayout from '../data/market.json';
 import { initDoors } from './world/doors.js';
 import { initPoiButton } from './ui/poi.js';
 import { initCamButton } from './ui/cambtn.js';
+import { initDialogs } from './ui/dialog.js';
 import { loadSignFont } from './world/signs.js';
 import brand from '../data/brand.json';
 import townData from '../data/town.json';
@@ -138,6 +139,7 @@ async function boot() {
   initDoors({ game, player, input, setActiveScene, interiors });
   initPoiButton($('ui'));
   initCamButton($('ui'), game.rig);
+  initDialogs({ host: document.body, player, rig: game.rig, input, econ: game.econ, worlds: game.worlds });
 
   post = createPost(renderer, game.rig.camera, { outlined: player.outlined });
   const fx = createParticles({ pois: world.pois, bounds: world.bounds, budget: quality.particles });

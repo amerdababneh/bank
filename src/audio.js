@@ -5,6 +5,7 @@
 const FILES = { music: 'loop', steps: 'steps' };
 const VOL = { music: 0.35, steps: 0.6 };
 const STEP_REF = 2.8; // m/s at which the steps play at normal rate
+const DUCK = 0.25;    // music level (x normal) while a voice line plays
 
 let ctx = null, master = null, muted = false;
 const gains = {}, sources = {};
@@ -70,4 +71,24 @@ export function setStepSpeed(speed) {
 export function setMuted(on) {
   muted = on;
   if (master) master.gain.setTargetAtTime(on ? 0 : 1, ctx.currentTime, 0.05);
+}
+
+// Spoken dialog lines: public/audio/voice/<key>.mp3 (e.g. dlg.teller.hello.mp3). null stops the current one.
+let voice = null;
+export function playVoice(key) {
+  voice?.pause();
+  voice = null;
+  duck(false);
+  if (!key || muted) return;
+  const v = new Audio(`/audio/voice/${key}.mp3`);
+  voice = v;
+  v.onplaying = () => duck(true);
+  v.onended = () => { if (voice === v) duck(false); };
+  v.play().catch(() => {}); // missing file or blocked: stay silent
+}
+
+// Music dips while someone speaks.
+function duck(on) {
+  const g = gains.music;
+  if (g) g.gain.setTargetAtTime(on ? VOL.music * DUCK : VOL.music, ctx.currentTime, on ? 0.12 : 0.4);
 }
