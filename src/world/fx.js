@@ -2,17 +2,18 @@
 // rebuild the RenderPipeline. Defaults depend on the tier; ?fx shows a panel to try them live.
 import {
   RenderPipeline, Vector3, InstancedMesh, PlaneGeometry, OctahedronGeometry, MeshBasicNodeMaterial, DoubleSide,
+  Group, Mesh, CylinderGeometry, CanvasTexture, SRGBColorSpace, Box3,
 } from 'three/webgpu';
 import {
   pass, mrt, output, normalView, normalWorld, positionWorld, directionToColor, colorToDirection, sample,
   screenUV, saturation, vec2, vec3, vec4, smoothstep, step, float, blendColor,
-  uniform, time, fract, hash, uv, sin, cos, mix, color, rotate, instanceIndex, positionLocal,
+  uniform, time, fract, hash, uv, sin, cos, mix, color, rotate, instanceIndex, positionLocal, texture,
 } from 'three/tsl';
 import { bloom } from 'three/addons/tsl/display/BloomNode.js';
 import { outline } from 'three/addons/tsl/display/OutlineNode.js';
 import { ao } from 'three/addons/tsl/display/GTAONode.js';
 import { ssr } from 'three/addons/tsl/display/SSRNode.js';
-import { fxU, hasKidShadow, setBloomMask } from './light.js';
+import { fxU, hasKidShadow, setBloomMask, makeLit } from './light.js';
 
 const SAT = 1.12;                      // a little more colour
 const TINT = vec3(1.03, 1.0, 0.96);    // warm Gulf sun
@@ -184,4 +185,56 @@ export function createWind(quality) {
       if (name === 'leaves') leaves.visible = on;
     },
   };
+}
+
+// ---- Flags on poles (brand.json "flag": colours [hoist, field], serration points, white band width).
+// The cloth waves on the GPU: displacement grows away from the pole, no per-frame CPU work.
+const POLE_H = 6.5, FLAG_W = 2.0, FLAG_H = 1.25;
+
+function flagTexture({ colors: [hoist, field], points = 9, band = 0.3 }) {
+  const c = document.createElement('canvas');
+  c.width = 256;
+  c.height = 160;
+  const g = c.getContext('2d');
+  g.fillStyle = field;
+  g.fillRect(0, 0, 256, 160);
+  g.fillStyle = hoist;
+  const bx = band * 256, tip = bx + 256 * 0.12, step = 160 / points;
+  g.beginPath();
+  g.moveTo(0, 0);
+  g.lineTo(bx, 0);
+  for (let i = 0; i < points; i++) { g.lineTo(tip, (i + 0.5) * step); g.lineTo(bx, (i + 1) * step); }
+  g.lineTo(0, 160);
+  g.fill();
+  const t = new CanvasTexture(c);
+  t.colorSpace = SRGBColorSpace;
+  return t;
+}
+
+// list: [{ x, z, ry }] in world space. Returns { group, colliders }.
+export function createFlags(list, cfg) {
+  const group = new Group(), colliders = [];
+  if (!list?.length || !cfg) return { group, colliders };
+  const u = uv(), ph = positionLocal.x.div(FLAG_W); // 0 at the pole -> 1 at the free end
+  const wave = sin(positionLocal.x.mul(2.6).sub(time.mul(4.2))).mul(ph).mul(0.18);
+  const cloth = new MeshBasicNodeMaterial({ side: DoubleSide });
+  cloth.positionNode = positionLocal.add(vec3(0, sin(time.mul(2.3).add(positionLocal.x)).mul(ph).mul(0.05), wave));
+  const shade = cos(positionLocal.x.mul(2.6).sub(time.mul(4.2))).mul(ph).mul(0.12).add(0.95);
+  cloth.colorNode = vec4(texture(flagTexture(cfg), u).rgb.mul(shade), 1);
+  const clothGeo = new PlaneGeometry(FLAG_W, FLAG_H, 16, 6).translate(FLAG_W / 2, 0, 0);
+  const poleGeo = new CylinderGeometry(0.05, 0.07, POLE_H, 8).translate(0, POLE_H / 2, 0);
+  const poleMat = makeLit({ color: 0xd9dde2 });
+  for (const f of list) {
+    const holder = new Group();
+    holder.position.set(f.x, 0, f.z);
+    holder.rotation.y = f.ry;
+    const pole = new Mesh(poleGeo, poleMat);
+    pole.castShadow = true;
+    const flag = new Mesh(clothGeo, cloth);
+    flag.position.set(0.06, POLE_H - FLAG_H / 2 - 0.1, 0);
+    holder.add(pole, flag);
+    group.add(holder);
+    colliders.push(new Box3(new Vector3(f.x - 0.15, 0, f.z - 0.15), new Vector3(f.x + 0.15, POLE_H, f.z + 0.15)));
+  }
+  return { group, colliders };
 }

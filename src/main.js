@@ -2,7 +2,7 @@ import { WebGPURenderer, Scene } from 'three/webgpu';
 import { applyI18n, t } from './i18n.js';
 import { quality, detectTier, applyTier, frameGate, adaptResolution, createDebug } from './quality.js';
 import { createCameraRig } from './camera.js';
-import { createPost, initFx, onFx, postActive, createWind, uWindCenter } from './world/fx.js';
+import { createPost, initFx, onFx, postActive, createWind, uWindCenter, createFlags } from './world/fx.js';
 import { createParticles } from './world/particles.js';
 import { PLAYER_LAYER } from './world/light.js';
 import { initFxPanel } from './ui/fxpanel.js';
@@ -13,6 +13,7 @@ import { createInput } from './input.js';
 import { createPlayer } from './player.js';
 import { createEconomy } from './economy.js';
 import { loadSave, initAutosave } from './save.js';
+import { initAudio, setStepSpeed } from './audio.js';
 import jobs from '../data/jobs.json';
 import items from '../data/items.json';
 import { loadAnims, loadFbx } from './anims.js';
@@ -105,6 +106,9 @@ async function boot() {
   setupSun(scene, computeBounds(townData, tiles), quality); // must exist before materials are built
   const world = buildTown({ town: townData, tiles, brand, quality, models });
   scene.add(world.group);
+  const flags = createFlags(world.flags, brand.flag);
+  scene.add(flags.group);
+  world.colliders.push(...flags.colliders);
   game.scenes.town = scene;
   game.world = world;
   const interiors = {};
@@ -128,6 +132,8 @@ async function boot() {
   player.teleport(world.spawn.x, world.spawn.z, Math.PI); // facing the bank, camera behind
   scene.add(player.group);
   updaters.push(player.update);
+  initAudio();
+  updaters.push(() => setStepSpeed(player.speed));
   updaters.push((dt) => { for (const w of Object.values(interiors)) if (w.scene === active) w.update(dt); });
   initDoors({ game, player, input, setActiveScene, interiors });
   initPoiButton($('ui'));

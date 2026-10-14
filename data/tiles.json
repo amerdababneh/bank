@@ -131,7 +131,17 @@
       ],
       "spawn": {
         "front": 5
-      }
+      },
+      "flags": [
+        {
+          "side": -3.6,
+          "front": 1.2
+        },
+        {
+          "side": 3.6,
+          "front": 1.2
+        }
+      ]
     },
     "h": {
       "build": "bakery",
@@ -280,7 +290,9 @@
           "r": 2.6
         }
       ],
-      "maxDepth": 6
+      "maxDepth": 6,
+      "face": "N",
+      "modelYaw": 180
     }
   }
 }

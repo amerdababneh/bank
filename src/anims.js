@@ -6,7 +6,7 @@ import { AnimationClip, QuaternionKeyframeTrack, Quaternion } from 'three/webgpu
 import { FBXLoader } from 'three/addons/loaders/FBXLoader.js';
 
 // key -> file name. 'talk' is loaded now and kept for later (NPC / teller chats).
-export const ANIMS = { idle: 'Neutral Idle', walk: 'Slow Run', talk: 'Talking' };
+export const ANIMS = { talk: 'Talking' }; // idle/run come from the GLB's own clips
 
 // 'mixamorig:LeftArm', 'mixamorig9LeftArm', 'LeftArm' -> 'leftarm' (Mixamo numbers rigs of uploaded characters)
 const q = new Quaternion();

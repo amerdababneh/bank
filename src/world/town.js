@@ -37,7 +37,7 @@ export function buildTown({ town, tiles, brand, quality, models = {} }) {
   const group = new Group();
   const b = createBatch();
   const materials = { lit: makeLit({ vertexColors: true }), unlit: makeUnlit(), water: null }; // animated water is built once the shore line is known
-  const palms = [], lamps = [], contacts = [], colliders = [], pois = [], anchors = {};
+  const palms = [], lamps = [], contacts = [], colliders = [], pois = [], anchors = {}, flags = [];
   let spawn = new Vector3(W * T / 2, 0, D * T / 2);
 
   const charAt = (x, z) => rows[z]?.[x];
@@ -144,13 +144,15 @@ export function buildTown({ town, tiles, brand, quality, models = {} }) {
       BUILDERS[d.build]?.(c, { ...d, marks: false }, r); // filler towers stay as a hazy back row
       placeSkyline(sky, r);
     } else if (model) {
-      fit = placeModel(model, r, ry + ((tiles.modelYaw ?? 0) * Math.PI) / 180);
+      // tiles.modelYaw: whole pack; d.modelYaw: this tile only (e.g. 180 = keep the model, put door/sign behind)
+      fit = placeModel(model, r, ry + (((tiles.modelYaw ?? 0) + (d.modelYaw ?? 0)) * Math.PI) / 180);
       const text = d.sign ? t(d.sign) : d.build === 'souq' ? t(`sign.souq.${1 + Math.floor(hash(r.cz, r.cx) * 5)}`) : null;
       if (text) c.sign(text, Math.min(5, fit.w * 0.6), 1.1, 0, Math.min(4, fit.h * 0.55), fit.front + 0.15);
     } else BUILDERS[d.build]?.(c, d, r);
     if (d.palm) c.palm(0, 0);
 
     const zf = fit ? fit.front : r.zf;
+    for (const f of d.flags ?? []) { const q = b.world(f.side, zf + f.front); flags.push({ x: q.x, z: q.z, ry }); }
     for (const p of d.pois ?? []) {
       const q = b.world(p.side, zf + p.front);
       const o = b.world(p.side, zf + p.front + 1.8); // where the player reappears when leaving an interior
@@ -231,5 +233,5 @@ export function buildTown({ town, tiles, brand, quality, models = {} }) {
 
   const bounds = computeBounds(town, tiles);
   const groundAt = (x, z) => grounds[def(Math.floor(x / T), Math.floor(z / T))?.ground]?.top ?? 0;
-  return { group, colliders, pois, bounds, spawn, groundAt, anchors, water: built.getObjectByName('water'), size: { w: MW, d: MD } };
+  return { group, colliders, pois, bounds, spawn, groundAt, anchors, flags, water: built.getObjectByName('water'), size: { w: MW, d: MD } };
 }
