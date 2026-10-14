@@ -11,6 +11,10 @@ import { buildTown, computeBounds, modelNames } from './world/town.js';
 import { loadModels, loadGltf } from './world/models.js';
 import { createInput } from './input.js';
 import { createPlayer } from './player.js';
+import { createEconomy } from './economy.js';
+import { loadSave, initAutosave } from './save.js';
+import jobs from '../data/jobs.json';
+import items from '../data/items.json';
 import { loadAnims, loadFbx } from './anims.js';
 import { buildInterior, interiorModelNames, interiorNpcNames } from './world/interior.js';
 import bankLayout from '../data/bank.json';
@@ -25,7 +29,7 @@ import tiles from '../data/tiles.json';
 
 // Shared handles for later phases (player, UI, interiors).
 const LAYOUTS = { bank: bankLayout, market: marketLayout };
-export const game = { renderer: null, rig: null, scenes: {}, world: null, worlds: {}, player: null };
+export const game = { renderer: null, rig: null, scenes: {}, world: null, worlds: {}, player: null, econ: null };
 // Per-frame callbacks: fn(dtSeconds, nowSeconds). Called only on rendered frames.
 export const updaters = [];
 
@@ -78,6 +82,8 @@ function frame(now) {
 }
 
 async function boot() {
+  game.econ = createEconomy({ jobs, items }, loadSave());
+  initAutosave(game.econ);
   applyI18n();
   applyBrand();
   progress(0.05);

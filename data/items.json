@@ -1,0 +1,9 @@
+{
+  "ice_cream": {"name": "آيس كريم", "price": 5, "store": "sweets", "icon": "🍦"},
+  "halawa": {"name": "حلاوة", "price": 8, "store": "sweets", "icon": "🍬"},
+  "ball": {"name": "كرة", "price": 25, "store": "toys", "icon": "⚽", "slot": "hand", "keep": true},
+  "kite": {"name": "طائرة ورقية", "price": 40, "store": "toys", "icon": "🪁", "slot": "hand", "keep": true},
+  "ghutra": {"name": "غترة", "price": 40, "store": "clothes", "icon": "🧣", "slot": "head", "keep": true},
+  "thobe": {"name": "ثوب", "price": 80, "store": "clothes", "icon": "👘", "slot": "body", "keep": true},
+  "sneakers": {"name": "حذاء رياضي", "price": 120, "store": "clothes", "icon": "👟", "slot": "feet", "keep": true}
+}

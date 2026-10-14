@@ -1,0 +1,5 @@
+{
+  "sweets": {"name": "محل الحلويات", "poi": "store_sweets", "items": ["ice_cream", "halawa"]},
+  "toys": {"name": "محل الألعاب", "poi": "store_toys", "items": ["ball", "kite"]},
+  "clothes": {"name": "محل الملابس", "poi": "store_clothes", "items": ["ghutra", "thobe", "sneakers"]}
+}
