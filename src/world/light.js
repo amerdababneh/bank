@@ -6,7 +6,7 @@ import {
 import {
   uniform, normalWorld, normalWorldGeometry, normalView, positionWorld, positionLocal, positionViewDirection, vec2, vec3, vec4,
   mix, smoothstep, step, fract, dot, bool, sin, color, texture, float, shadow, output, cameraPosition, screenCoordinate,
-  time, instanceIndex, mx_noise_float, fog, rangeFogFactor, fwidth,
+  time, instanceIndex, mx_noise_float, fog, rangeFogFactor, fwidth, mrt,
 } from 'three/tsl';
 
 export const SUN_DIR = new Vector3(-0.6, 0.7, 0.35).normalize(); // points toward the sun
@@ -29,9 +29,20 @@ let kidShadow = null; // small realtime map that only renders the player (layer 
 export let sunLight = null;
 let kidLight = null;
 export const PLAYER_LAYER = 2;
+
+// Player materials write bloomMask=0 into the bloom pass MRT. The node must only be set while that
+// MRT exists: with bloom off (no MRT) a material mrtNode breaks the draw.
+const NO_BLOOM = mrt({ bloomMask: float(0) });
+const noBloom = new Set();
+let bloomOn = false;
+export function setBloomMask(on) {
+  bloomOn = on;
+  for (const m of noBloom) { m.mrtNode = on ? NO_BLOOM : null; m.needsUpdate = true; }
+}
 // 0 inside the bank: the town shadow map must not land on the player there
 const uSceneShadow = uniform(1);
 export const setSceneShadows = (on) => { uSceneShadow.value = on ? 1 : 0; };
+export const sceneShadowsOn = () => uSceneShadow.value > 0.5;
 
 // drifting cloud shadows on everything
 const cloudShade = mix(1, 0.8, smoothstep(0.15, 0.45, mx_noise_float(vec3(positionWorld.xz.mul(0.03).add(time.mul(vec2(0.02, 0.008))), 0))));
@@ -62,7 +73,8 @@ const OCC_MASK = ditherNoise.greaterThanEqual(occFade.mul(0.88)); // true = keep
 const KEEP = bool(true); // the shadow pass must not see the hole
 
 // rim light: bright edge facing away from the camera (player only)
-const rimTerm = positionViewDirection.dot(normalView).max(0).oneMinus().pow(3).mul(0.55).mul(fxU.rim);
+const RIM = 0.18; // subtle: a white thobe blows out with more
+const rimTerm = positionViewDirection.dot(normalView).max(0).oneMinus().pow(4).mul(RIM).mul(fxU.rim);
 
 // palm sway: bend grows with height; phase per instance
 const swayPos = () => {
@@ -73,23 +85,28 @@ const swayPos = () => {
 
 // Opaque-by-default fake-sun material. Vertex colors / instance colors multiply on top automatically.
 // occlude: false for the player's own materials. rim: player. sway: instanced palms.
-export function makeLit({ color: c = 0xffffff, map = null, vertexColors = false, shadows = true, transparent = false, opacity = 1, side, occlude = true, rim = false, sway = false, allFaces = false } = {}) {
+export function makeLit({ color: c = 0xffffff, map = null, vertexColors = false, shadows = true, transparent = false, opacity = 1, side, occlude = true, rim = false, sway = false, allFaces = false, shadowNode = null } = {}) {
   const m = new MeshBasicNodeMaterial({ vertexColors, transparent, opacity, ...(side !== undefined && { side }) });
   const tex = map ? texture(map) : null;
   const base = tex ? tex.rgb.mul(color(c)) : color(c);
   let lit = fakeSun(base);
-  if (rim) lit = lit.add(rimTerm);
+  if (rim) lit = lit.add(vec3(base).add(0.1).mul(rimTerm).mul(2)); // tinted by albedo: dark hair gets no white halo
   m.colorNode = vec4(lit, tex ? tex.a : float(1));
   if (sway) m.positionNode = swayPos();
   // Shadow goes in outputNode, not colorNode: the shadow pass reuses colorNode.a, and sampling the
   // shadow map there reads the texture while it is being rendered (WebGPU validation error).
-  if (shadows && sunShadow) {
-    let sh = sunShadow;
-    if (kidShadow && !allFaces) sh = sh.mul(mix(1, kidShadow, fxU.kidShadow)); // never on the kid himself
+  // shadowNode: a scene's own map (bank interior); otherwise the town sun (+ kid shadow, off indoors)
+  if (shadows && (shadowNode || sunShadow)) {
+    let sh = shadowNode ?? sunShadow;
+    if (kidShadow && !allFaces && !shadowNode) sh = sh.mul(mix(1, kidShadow, fxU.kidShadow)); // never on the kid himself
     // only ground/roofs receive; walls stay clean (no acne). allFaces: the player receives everywhere
     if (!allFaces) sh = mix(1, sh, smoothstep(0.35, 0.75, normalWorld.y));
-    sh = mix(1, sh, uSceneShadow);
+    if (!shadowNode) sh = mix(1, sh, uSceneShadow);
     m.outputNode = vec4(output.rgb.mul(sh), output.a);
+  }
+  if (allFaces) { // the player never blooms (white thobe + rim); mask only while bloom runs (see setBloomMask)
+    noBloom.add(m);
+    if (bloomOn) m.mrtNode = NO_BLOOM;
   }
   if (occlude) {
     m.maskNode = OCC_MASK;
@@ -123,17 +140,30 @@ export function makeWater(hex, shoreZ) {
 export const makeUnlit = ({ vertexColors = true, color: c = 0xffffff } = {}) => new MeshBasicMaterial({ vertexColors, color: c });
 
 // Replace every material of a loaded GLB with a fake-sun one (keeps color, map and vertex colors).
-export function litFromGltf(root, { occlude = true, rim = false, shadows = true, allFaces = false } = {}) {
+export function litFromGltf(root, { occlude = true, rim = false, shadows = true, allFaces = false, shadowNode = null, indoorVariant = false } = {}) {
   const cache = new Map();
   root.traverse((o) => {
     if (!o.isMesh) return;
-    const old = o.material;
-    if (!cache.has(old)) {
-      cache.set(old, makeLit({ color: old.color ?? 0xffffff, map: old.map ?? null, vertexColors: !!o.geometry.attributes.color, occlude, rim, shadows, allFaces }));
+    const conv = (old) => {
+      if (!cache.has(old)) {
+        cache.set(old, makeLit({ color: old.color ?? 0xffffff, map: old.map ?? null, vertexColors: !!o.geometry.attributes.color, occlude, rim, shadows, allFaces, shadowNode }));
+      }
+      return cache.get(old);
+    };
+    const src = o.material;
+    o.material = Array.isArray(src) ? src.map(conv) : conv(src); // FBX: multi-material
+    if (indoorVariant) { // same look without the town sun shadow (that light is not in interior scenes)
+      const inConv = (old) => makeLit({ color: old.color ?? 0xffffff, map: old.map ?? null, vertexColors: !!o.geometry.attributes.color, occlude, rim, shadows: false, allFaces });
+      o.userData.matOut = o.material;
+      o.userData.matIn = Array.isArray(src) ? src.map(inConv) : inConv(src);
     }
-    o.material = cache.get(old);
   });
   return root;
+}
+
+// Swap meshes made with indoorVariant between their town and interior materials.
+export function setIndoor(root, indoor) {
+  root.traverse((o) => { if (o.userData.matIn) o.material = indoor ? o.userData.matIn : o.userData.matOut; });
 }
 
 export function setupSky(scene) {
@@ -197,6 +227,27 @@ export function updateKidShadow(x, y, z) {
 }
 
 export const hasKidShadow = () => !!kidLight;
+// Interior: one overhead light whose shadow map renders ONCE (mid/high). Returns the shadow node for
+// that scene's materials, or null on low. The player is excluded (mask 0b1001 like the town sun).
+export function setupInteriorShadow(scene, quality, w, d) {
+  if (!quality.shadows) return null;
+  const l = new DirectionalLight(0xffffff, 1);
+  l.position.set(2.5, 12, 4);
+  l.castShadow = true;
+  const s = l.shadow, r = Math.max(w, d) / 2 + 1;
+  s.mapSize.set(quality.shadowMap, quality.shadowMap);
+  Object.assign(s.camera, { left: -r, right: r, top: r, bottom: -r, near: 1, far: 30 });
+  s.camera.updateProjectionMatrix();
+  s.camera.layers.mask = 0b1001;
+  s.bias = -0.0005;
+  s.normalBias = 0.03;
+  s.intensity = 0.45;
+  s.autoUpdate = false;
+  s.needsUpdate = true;
+  scene.add(l, l.target);
+  return shadow(l);
+}
+
 export const refreshShadows = () => { if (sunLight) sunLight.shadow.needsUpdate = true; };
 
 let blobTex = null;

@@ -21,5 +21,5 @@
 
 ## Map
 src/: main.js · quality.js · camera.js · input.js · player.js · bus.js · economy.js · save.js · audio.js · quests.js
-src/world/: town.js (ASCII map → tiles) · bank.js (interior) · light.js · fx.js   src/ui/: screens, hud, base.css   src/jobs/: runner, assemble.js
+src/world/: town.js (ASCII map → tiles) · interior.js (bank + market rooms from data/bank.json, market.json) · doors.js · light.js · fx.js   src/ui/: screens, hud, base.css   src/jobs/: runner, assemble.js
 data/: brand.json ar.json town.json tiles.json items.json stores.json jobs.json quests.json

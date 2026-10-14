@@ -172,3 +172,17 @@ html, body {
 .fxp .c-mid { background: #b28704; }
 .fxp .c-high { background: #c25e00; }
 .fxp .c-demo { background: #b71c1c; }
+
+.cam-btn {
+  position: fixed;
+  top: calc(var(--safe-t) + 12px);
+  left: calc(var(--safe-l) + 12px);
+  width: 56px;
+  height: 56px;
+  border: 3px solid #fff;
+  border-radius: 18px;
+  font-size: 26px;
+  background: rgba(255, 255, 255, 0.75);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+}
+.cam-btn:active { transform: scale(0.92); }

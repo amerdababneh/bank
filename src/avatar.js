@@ -29,7 +29,7 @@ export function createProceduralAvatar({ gender = 'boy', color = 0 }) {
   const g = geos(), cfg = data[gender] ?? data.boy;
   const base = cfg.colors[color % cfg.colors.length];
   const mats = [];
-  const mat = (c) => { const m = makeLit({ color: c instanceof Color ? c : new Color(c), occlude: false, rim: true, allFaces: true }); mats.push(m); return m; };
+  const mat = (c) => { const m = makeLit({ color: c instanceof Color ? c : new Color(c), shadows: false, occlude: false, rim: true, allFaces: true }); mats.push(m); return m; };
   const part = (parent, geo, m, x = 0, y = 0, z = 0) => {
     const o = new Mesh(geo, m);
     o.position.set(x, y, z);
@@ -86,8 +86,8 @@ export function createProceduralAvatar({ gender = 'boy', color = 0 }) {
   };
 }
 
-// glbs: { boy?: gltf, girl?: gltf } (null/undefined entries fall back to procedural)
-export function createAvatar({ gender, color, glbs = {} }) {
+// glbs: { boy?: gltf, girl?: gltf } (null/undefined entries fall back to procedural); anims: loadAnims()
+export function createAvatar({ gender, color, glbs = {}, anims = {} }) {
   const glb = glbs[gender];
-  return glb ? createGlbAvatar(glb) : createProceduralAvatar({ gender, color });
+  return glb ? createGlbAvatar(glb, anims) : createProceduralAvatar({ gender, color });
 }

@@ -6,5 +6,8 @@
   "karak": {"icon": "☕"},
   "store_sweets": {"icon": "🍦"},
   "store_toys": {"icon": "🧸"},
-  "store_clothes": {"icon": "👕"}
+  "store_clothes": {"icon": "👕"},
+  "market_door": {"icon": "🛒"},
+  "market_exit": {"icon": "🚪"},
+  "market_checkout": {"icon": "🧾"}
 }

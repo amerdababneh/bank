@@ -29,7 +29,8 @@ function torch(b, x) {
 export function skyline(c, def, r) {
   const { b } = c;
   b.at(r.cx, r.cz, 0);
-  const marks = [[-0.3, torch], [0.08, dohaTower], [0.34, museum]].map(([f, fn]) => [f * r.w, fn]);
+  // def.marks === false: no landmarks (skyscraper models are placed instead, see town.js)
+  const marks = def.marks === false ? [] : [[-0.3, torch], [0.08, dohaTower], [0.34, museum]].map(([f, fn]) => [f * r.w, fn]);
   for (const [x, fn] of marks) fn(b, x);
   for (let i = 0, x = -r.w / 2 + 3; x < r.w / 2 - 3; i++) {
     const w = 4 + rnd(i) * 3, h = 8 + rnd(i + 40) * 14;

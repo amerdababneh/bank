@@ -20,5 +20,10 @@
   "poi.karak": "كشك الكرك",
   "poi.store_sweets": "حلويات",
   "poi.store_toys": "ألعاب",
-  "poi.store_clothes": "ملابس"
+  "poi.store_clothes": "ملابس",
+  "sign.market": "سوبرماركت",
+  "poi.market_door": "السوبرماركت",
+  "poi.market_exit": "الخروج",
+  "poi.market_checkout": "المحاسبة",
+  "ui.camera": "تبديل الكاميرا"
 }

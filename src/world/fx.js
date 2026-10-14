@@ -12,7 +12,7 @@ import { bloom } from 'three/addons/tsl/display/BloomNode.js';
 import { outline } from 'three/addons/tsl/display/OutlineNode.js';
 import { ao } from 'three/addons/tsl/display/GTAONode.js';
 import { ssr } from 'three/addons/tsl/display/SSRNode.js';
-import { fxU, hasKidShadow } from './light.js';
+import { fxU, hasKidShadow, setBloomMask } from './light.js';
 
 const SAT = 1.12;                      // a little more colour
 const TINT = vec3(1.03, 1.0, 0.96);    // warm Gulf sun
@@ -56,6 +56,7 @@ export function initFx(quality) {
 
 function apply(name) {
   if (fxU[name]) fxU[name].value = flags[name] ? 1 : 0;
+  if (name === 'bloom') setBloomMask(flags.bloom);
   for (const fn of listeners) fn(name, flags[name]);
 }
 
@@ -75,11 +76,14 @@ export function createPost(renderer, camera, opts = {}) {
   function build(scene) {
     const scenePass = pass(scene, camera);
     const needGeo = flags.gtao || flags.ssr;
+    const outs = { output };
     if (needGeo) {
       // floors and water near y=0 facing up are "glossy" for SSR
       const gloss = step(0.9, normalWorld.y).mul(step(positionWorld.y, 0.2)).mul(0.7);
-      scenePass.setMRT(mrt({ output, normal: directionToColor(normalView), metalrough: vec2(gloss, 0.15) }));
+      Object.assign(outs, { normal: directionToColor(normalView), metalrough: vec2(gloss, 0.15) });
     }
+    if (flags.bloom) outs.bloomMask = float(1); // materials can override with mrtNode (the player writes 0)
+    if (needGeo || flags.bloom) scenePass.setMRT(mrt(outs));
     const colorTex = scenePass.getTextureNode('output');
     let c = colorTex.rgb;
     if (needGeo) {
@@ -98,7 +102,10 @@ export function createPost(renderer, camera, opts = {}) {
         c = blendColor(vec4(c, 1), ssrPass).rgb;
       }
     }
-    if (flags.bloom) c = c.add(bloom(vec4(c, 1), BLOOM.strength, BLOOM.radius, BLOOM.threshold).rgb);
+    if (flags.bloom) {
+      const mask = scenePass.getTextureNode('bloomMask').r;
+      c = c.add(bloom(vec4(c.mul(mask), 1), BLOOM.strength, BLOOM.radius, BLOOM.threshold).rgb);
+    }
     if (flags.outline && opts.outlined) {
       const o = outline(scene, camera, { selectedObjects: opts.outlined, edgeThickness: float(1.5) });
       c = c.mul(o.visibleEdge.add(o.hiddenEdge.mul(0.6)).clamp(0, 1).mul(0.85).oneMinus());

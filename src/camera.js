@@ -1,12 +1,17 @@
-// Fixed 3/4 top-down follow rig with presets. No allocations per frame.
+// Follow camera rig with presets and two modes: 'follow' (low 3rd person that swings behind the kid)
+// and 'top' (high 3/4 view, fixed north). No allocations per frame.
 import { PerspectiveCamera, Vector3 } from 'three/webgpu';
 
 const RAD = Math.PI / 180;
 const PRESETS = {
   // low third-person view behind the kid; `look` = height of the look-at point above the feet
-  town: { dist: 6.5, pitch: 20 * RAD, fov: 46, look: 1.4 },
-  interior: { dist: 6, pitch: 24 * RAD, fov: 48, look: 1.4 },
+  town: { dist: 5.1, pitch: 20 * RAD, fov: 46, look: 1.1 },
+  interior: { dist: 4.7, pitch: 24 * RAD, fov: 48, look: 1.1 },
+  // high 3/4 view
+  townTop: { dist: 15, pitch: 50 * RAD, fov: 40, look: 0.6 },
+  interiorTop: { dist: 11, pitch: 55 * RAD, fov: 44, look: 0.6 },
 };
+const MODE_KEY = 'mk_cam';
 const REF_ASPECT = 1.7; // narrower screens widen the vertical fov so the horizontal view stays similar
 const PORTRAIT_MAX = 1.3; // ...but only up to this much, so the kid stays big on phones held upright
 const MOBILE_DIST = navigator.maxTouchPoints > 0 ? 0.88 : 1; // small touch screens: camera closer
@@ -16,7 +21,8 @@ export function createCameraRig() {
   const target = new Vector3();   // set by the follow target (player)
   const focus = new Vector3();    // smoothed look-at point
   const cur = { dist: PRESETS.town.dist * MOBILE_DIST, pitch: PRESETS.town.pitch };
-  const rig = { camera, target, yaw: 0, aspect: 1, preset: PRESETS.town };
+  const rig = { camera, target, yaw: 0, aspect: 1, preset: PRESETS.town, base: 'town', mode: 'follow' };
+  try { if (localStorage.getItem(MODE_KEY) === 'top') rig.mode = 'top'; } catch { /* ignore */ }
 
   function applyFov() {
     const k = Math.min(PORTRAIT_MAX, Math.max(1, REF_ASPECT / rig.aspect));
@@ -37,7 +43,8 @@ export function createCameraRig() {
     applyFov();
   };
   rig.setPreset = (name, snap = false) => {
-    rig.preset = PRESETS[name] ?? PRESETS.town;
+    rig.base = name;
+    rig.preset = (rig.mode === 'top' && PRESETS[name + 'Top']) || PRESETS[name] || PRESETS.town;
     applyFov();
     if (snap) {
       cur.dist = rig.preset.dist * MOBILE_DIST;
@@ -52,6 +59,13 @@ export function createCameraRig() {
     cur.dist += (rig.preset.dist * MOBILE_DIST - cur.dist) * k;
     cur.pitch += (rig.preset.pitch - cur.pitch) * k;
     place();
+  };
+  // switch view; the rig eases to the new distance/pitch
+  rig.setMode = (mode) => {
+    rig.mode = mode;
+    if (mode === 'top') rig.yaw = 0;
+    try { localStorage.setItem(MODE_KEY, mode); } catch { /* ignore */ }
+    rig.setPreset(rig.base);
   };
   return rig;
 }

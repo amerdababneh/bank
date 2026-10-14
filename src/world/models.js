@@ -13,7 +13,8 @@ export async function loadGltf(name) {
     const buf = await res.arrayBuffer();
     // the dev server answers missing files with index.html, so check the magic bytes
     if (buf.byteLength < 4 || new Uint32Array(buf, 0, 1)[0] !== GLB_MAGIC) return null;
-    return await loader.parseAsync(buf, '/models/');
+    const dir = name.includes('/') ? name.slice(0, name.lastIndexOf('/') + 1) : '';
+    return await loader.parseAsync(buf, `/models/${dir}`); // textures resolve next to the model
   } catch {
     return null;
   }

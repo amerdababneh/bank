@@ -1,14 +1,14 @@
 // Player: movement (4 m/s), circle-vs-AABB collision with sliding, camera follow, POI detection.
 import { Group, Mesh, Vector3, PlaneGeometry } from 'three/webgpu';
 import { createAvatar } from './avatar.js';
-import { makeBlobMaterial, setOcclusionFocus, updateKidShadow, fxU, PLAYER_LAYER } from './world/light.js';
+import { makeBlobMaterial, setOcclusionFocus, updateKidShadow, fxU, PLAYER_LAYER, sceneShadowsOn } from './world/light.js';
 import { emit } from './bus.js';
 
-const SPEED = 4, RADIUS = 0.45, TURN = 14, SCALE = 0.9;
+const SPEED = 2.8, RADIUS = 0.35, TURN = 14, SCALE = 0.7;
 const TAU = Math.PI * 2, CAM_FOLLOW = 2.2;
 const wrap = (a) => { a %= TAU; return a > Math.PI ? a - TAU : a < -Math.PI ? a + TAU : a; };
 
-export function createPlayer({ input, rig, glbs }) {
+export function createPlayer({ input, rig, glbs, anims }) {
   const group = new Group();
   group.scale.setScalar(SCALE);
   const pos = new Vector3();
@@ -28,7 +28,7 @@ export function createPlayer({ input, rig, glbs }) {
   p.setLook = (gender, color) => {
     avatar?.dispose();
     look = { gender, color };
-    avatar = createAvatar({ gender, color, glbs });
+    avatar = createAvatar({ gender, color, glbs, anims });
     group.add(avatar.root);
     p.outlined[0] = avatar.root;
     markLayer();
@@ -37,7 +37,7 @@ export function createPlayer({ input, rig, glbs }) {
   p.teleport = (x, z, ry = yaw, camYaw) => {
     pos.set(x, 0, z);
     yaw = ry;
-    if (camYaw !== undefined) rig.yaw = camYaw;
+    if (camYaw !== undefined && rig.mode !== 'top') rig.yaw = camYaw; // top view stays facing north
     stuck = 0;
     input.hasTarget = false;
     group.position.set(x, world.groundAt?.(x, z) ?? 0, z);
@@ -103,13 +103,13 @@ export function createPlayer({ input, rig, glbs }) {
       yaw += wrap(Math.atan2(dx, dz) - yaw) * Math.min(1, TURN * dt);
       // 3rd-person follow: the camera swings in behind the kid; not while walking back toward it (no spin)
       const back = mag > 0 ? Math.max(0, input.y / mag) : 0;
-      rig.yaw += wrap(yaw + Math.PI - rig.yaw) * Math.min(1, CAM_FOLLOW * dt * amt * (1 - back));
+      if (rig.mode !== 'top') rig.yaw += wrap(yaw + Math.PI - rig.yaw) * Math.min(1, CAM_FOLLOW * dt * amt * (1 - back));
     }
     const gy = world.groundAt?.(pos.x, pos.z) ?? 0;
     group.position.set(pos.x, gy, pos.z);
     setOcclusionFocus(pos.x, gy + 0.8, pos.z);
     updateKidShadow(pos.x, gy, pos.z);
-    blob.visible = fxU.kidShadow.value < 0.5;
+    blob.visible = fxU.kidShadow.value < 0.5 || !sceneShadowsOn(); // indoors: no kid shadow map -> blob
     p.feet.set(pos.x, gy, pos.z);
     p.speed = speed;
     group.rotation.y = yaw;

@@ -1,26 +1,286 @@
 {
+  "useModels": true,
+  "modelYaw": 0,
   "grounds": {
-    "road": {"color": "#565a64", "top": 0},
-    "plaza": {"color": ["#dccaa4", "#d3bf97"], "top": 0.06},
-    "corniche": {"color": ["#e6dcc6", "#dccfb4"], "top": 0.12},
-    "land": {"color": "#cdb58a", "top": 0.06},
-    "water": {"color": "#5ec4e4", "top": -0.8}
+    "road": {
+      "color": "#565a64",
+      "top": 0
+    },
+    "plaza": {
+      "color": [
+        "#dccaa4",
+        "#d3bf97"
+      ],
+      "top": 0.06
+    },
+    "corniche": {
+      "color": [
+        "#e6dcc6",
+        "#dccfb4"
+      ],
+      "top": 0.12
+    },
+    "land": {
+      "color": "#cdb58a",
+      "top": 0.06
+    },
+    "water": {
+      "color": "#5ec4e4",
+      "top": -0.8
+    }
   },
-  "apron": {"land": "#cdb58a", "water": "#5ec4e4"},
+  "apron": {
+    "land": "#cdb58a",
+    "water": "#5ec4e4"
+  },
+  "scatter": {
+    "on": [
+      ".",
+      "P"
+    ],
+    "perTile": 2,
+    "chance": 0.55,
+    "clear": 3.5,
+    "items": [
+      {
+        "model": "buildings2/tree-large",
+        "h": 5.5,
+        "r": 0.45
+      },
+      {
+        "model": "buildings2/tree-small",
+        "h": 3.2,
+        "r": 0.35
+      },
+      {
+        "model": "buildings2/planter",
+        "h": 1.1,
+        "r": 0.6
+      }
+    ]
+  },
   "tiles": {
-    "S": {"build": "skyline", "ground": "land", "span": true, "void": true},
-    "~": {"build": "none", "ground": "water", "water": true, "void": true},
-    "D": {"build": "dhow", "ground": "water", "water": true, "void": true},
-    "C": {"build": "corniche", "ground": "corniche", "walk": true, "palmEvery": 2, "lamp": true},
-    "R": {"build": "road", "ground": "road", "walk": true},
-    ".": {"build": "none", "ground": "plaza", "walk": true},
-    "P": {"build": "none", "ground": "plaza", "walk": true, "palm": true},
-    "B": {"build": "bank", "ground": "plaza", "span": true, "solid": true, "model": "bank", "maxDepth": 11, "pois": [{"id": "bank_door", "front": 2.4, "side": 0, "r": 2.6},{"id": "atm_out", "front": 1.6, "side": -5.8, "r": 1.8}], "spawn": {"front": 5}},
-    "h": {"build": "bakery", "ground": "plaza", "span": true, "solid": true, "model": "bakery", "maxDepth": 6, "sign": "sign.bakery", "pois": [{"id": "bakery", "front": 1.8, "side": 0, "r": 2.6}]},
-    "k": {"build": "karak", "ground": "plaza", "span": true, "solid": true, "model": "karak", "maxDepth": 5, "sign": "sign.karak", "pois": [{"id": "karak", "front": 1.8, "side": 0, "r": 2.6}]},
-    "y": {"build": "store", "ground": "plaza", "solid": true, "model": "store_sweets", "sign": "sign.sweets", "style": {"wall": "#f4a6c0", "awning": "#e8447f", "trim": "#fff4f8", "prop": "icecream"}, "pois": [{"id": "store_sweets", "front": 1.6, "side": 0, "r": 2.4}], "maxDepth": 6},
-    "t": {"build": "store", "ground": "plaza", "solid": true, "model": "store_toys", "sign": "sign.toys", "style": {"wall": "#ffd966", "awning": "#2f80ed", "trim": "#fff7d6", "prop": "blocks"}, "pois": [{"id": "store_toys", "front": 1.6, "side": 0, "r": 2.4}], "maxDepth": 6},
-    "c": {"build": "store", "ground": "plaza", "solid": true, "model": "store_clothes", "sign": "sign.clothes", "style": {"wall": "#8fd3c8", "awning": "#1f8a7a", "trim": "#eafaf7", "prop": "dress"}, "pois": [{"id": "store_clothes", "front": 1.6, "side": 0, "r": 2.4}], "maxDepth": 6},
-    "s": {"build": "souq", "ground": "plaza", "solid": true, "model": "souq", "maxDepth": 6}
+    "S": {
+      "build": "skyline",
+      "ground": "land",
+      "span": true,
+      "void": true,
+      "skyModels": [
+        "buildings/building-skyscraper-a",
+        "buildings/building-skyscraper-b",
+        "buildings/building-skyscraper-c",
+        "buildings/building-skyscraper-d",
+        "buildings/building-skyscraper-e"
+      ]
+    },
+    "~": {
+      "build": "none",
+      "ground": "water",
+      "water": true,
+      "void": true
+    },
+    "D": {
+      "build": "dhow",
+      "ground": "water",
+      "water": true,
+      "void": true
+    },
+    "C": {
+      "build": "corniche",
+      "ground": "corniche",
+      "walk": true,
+      "palmEvery": 2,
+      "lamp": true
+    },
+    "R": {
+      "build": "road",
+      "ground": "road",
+      "walk": true
+    },
+    ".": {
+      "build": "none",
+      "ground": "plaza",
+      "walk": true
+    },
+    "P": {
+      "build": "none",
+      "ground": "plaza",
+      "walk": true,
+      "palm": true
+    },
+    "B": {
+      "build": "bank",
+      "ground": "plaza",
+      "span": true,
+      "solid": true,
+      "model": "bank",
+      "maxDepth": 11,
+      "pois": [
+        {
+          "id": "bank_door",
+          "front": 2.4,
+          "side": 0,
+          "r": 2.6
+        },
+        {
+          "id": "atm_out",
+          "front": 1.6,
+          "side": -5.8,
+          "r": 1.8
+        }
+      ],
+      "spawn": {
+        "front": 5
+      }
+    },
+    "h": {
+      "build": "bakery",
+      "ground": "plaza",
+      "span": true,
+      "solid": true,
+      "model": "buildings/building-a",
+      "maxDepth": 6,
+      "sign": "sign.bakery",
+      "pois": [
+        {
+          "id": "bakery",
+          "front": 1.8,
+          "side": 0,
+          "r": 2.6
+        }
+      ]
+    },
+    "k": {
+      "build": "karak",
+      "ground": "plaza",
+      "span": true,
+      "solid": true,
+      "model": "buildings/building-b",
+      "maxDepth": 5,
+      "sign": "sign.karak",
+      "pois": [
+        {
+          "id": "karak",
+          "front": 1.8,
+          "side": 0,
+          "r": 2.6
+        }
+      ]
+    },
+    "y": {
+      "build": "store",
+      "ground": "plaza",
+      "solid": true,
+      "model": "buildings/building-c",
+      "sign": "sign.sweets",
+      "style": {
+        "wall": "#f4a6c0",
+        "awning": "#e8447f",
+        "trim": "#fff4f8",
+        "prop": "icecream"
+      },
+      "pois": [
+        {
+          "id": "store_sweets",
+          "front": 1.6,
+          "side": 0,
+          "r": 2.4
+        }
+      ],
+      "maxDepth": 6
+    },
+    "t": {
+      "build": "store",
+      "ground": "plaza",
+      "solid": true,
+      "model": "buildings/building-d",
+      "sign": "sign.toys",
+      "style": {
+        "wall": "#ffd966",
+        "awning": "#2f80ed",
+        "trim": "#fff7d6",
+        "prop": "blocks"
+      },
+      "pois": [
+        {
+          "id": "store_toys",
+          "front": 1.6,
+          "side": 0,
+          "r": 2.4
+        }
+      ],
+      "maxDepth": 6
+    },
+    "c": {
+      "build": "store",
+      "ground": "plaza",
+      "solid": true,
+      "model": "buildings/building-e",
+      "sign": "sign.clothes",
+      "style": {
+        "wall": "#8fd3c8",
+        "awning": "#1f8a7a",
+        "trim": "#eafaf7",
+        "prop": "dress"
+      },
+      "pois": [
+        {
+          "id": "store_clothes",
+          "front": 1.6,
+          "side": 0,
+          "r": 2.4
+        }
+      ],
+      "maxDepth": 6
+    },
+    "s": {
+      "build": "souq",
+      "ground": "plaza",
+      "solid": true,
+      "model": [
+        "buildings/building-f",
+        "buildings/building-g",
+        "buildings/building-h",
+        "buildings/building-i",
+        "buildings/building-j",
+        "buildings/building-k",
+        "buildings/building-l",
+        "buildings/building-m",
+        "buildings/building-n",
+        "buildings2/building-type-a",
+        "buildings2/building-type-b",
+        "buildings2/building-type-c",
+        "buildings2/building-type-d",
+        "buildings2/building-type-e",
+        "buildings2/building-type-f",
+        "buildings2/building-type-g",
+        "buildings2/building-type-h",
+        "buildings2/building-type-i"
+      ],
+      "maxDepth": 6
+    },
+    "M": {
+      "build": "store",
+      "ground": "plaza",
+      "span": true,
+      "solid": true,
+      "model": "buildings/building-k",
+      "sign": "sign.market",
+      "style": {
+        "wall": "#dff3e8",
+        "awning": "#2e9b5f",
+        "trim": "#ffffff",
+        "prop": "blocks"
+      },
+      "pois": [
+        {
+          "id": "market_door",
+          "front": 1.8,
+          "side": 0,
+          "r": 2.6
+        }
+      ],
+      "maxDepth": 6
+    }
   }
 }

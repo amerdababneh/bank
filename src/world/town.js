@@ -9,6 +9,8 @@ import { road, corniche } from './grounds.js';
 import { souq, bakery, karak, store } from './buildings.js';
 import { bank } from './bankfront.js';
 import { skyline } from './skyline.js';
+import { t } from '../i18n.js';
+import { scatter } from './scatter.js';
 
 const BUILDERS = { road, corniche, dhow, souq, bakery, karak, store, bank, skyline };
 // facade direction -> rotation about Y; +z (south) faces the camera
@@ -23,7 +25,11 @@ export function computeBounds(town, tiles) {
   return { minX: Math.min(...xs) * T, maxX: (Math.max(...xs) + 1) * T, minZ: Math.min(...zs) * T, maxZ: (Math.max(...zs) + 1) * T };
 }
 
-export const modelNames = (tiles) => Object.values(tiles.tiles).map((d) => d.model).filter(Boolean);
+// tiles.json: useModels:false = backup (all procedural). model: name or [names] (picked per building).
+export const modelNames = (tiles) => (tiles.useModels === false ? [] : [
+  ...Object.values(tiles.tiles).flatMap((d) => [d.model ?? [], d.skyModels ?? []].flat()),
+  ...(tiles.scatter?.items ?? []).map((it) => it.model),
+]);
 
 export function buildTown({ town, tiles, brand, quality, models = {} }) {
   const T = town.tile, rows = town.map, D = rows.length, W = rows[0].length;
@@ -130,20 +136,35 @@ export function buildTown({ town, tiles, brand, quality, models = {} }) {
     };
     c.top = grounds[d.ground]?.top ?? 0;
     b.at(r.cx, r.cz, ry);
-    const model = d.model && models[d.model];
-    if (model) placeModel(model, r, ry);
-    else BUILDERS[d.build]?.(c, d, r);
+    const mName = Array.isArray(d.model) ? d.model[Math.floor(hash(r.cx, r.cz) * d.model.length)] : d.model;
+    const model = tiles.useModels !== false && mName && models[mName];
+    const sky = tiles.useModels !== false && d.skyModels?.map((n) => models[n]).filter(Boolean);
+    let fit = null; // model buildings: doors and colliders follow the fitted model, not the whole plot
+    if (sky?.length) {
+      BUILDERS[d.build]?.(c, { ...d, marks: false }, r); // filler towers stay as a hazy back row
+      placeSkyline(sky, r);
+    } else if (model) {
+      fit = placeModel(model, r, ry + ((tiles.modelYaw ?? 0) * Math.PI) / 180);
+      const text = d.sign ? t(d.sign) : d.build === 'souq' ? t(`sign.souq.${1 + Math.floor(hash(r.cz, r.cx) * 5)}`) : null;
+      if (text) c.sign(text, Math.min(5, fit.w * 0.6), 1.1, 0, Math.min(4, fit.h * 0.55), fit.front + 0.15);
+    } else BUILDERS[d.build]?.(c, d, r);
     if (d.palm) c.palm(0, 0);
 
+    const zf = fit ? fit.front : r.zf;
     for (const p of d.pois ?? []) {
-      const q = b.world(p.side, r.zf + p.front);
-      pois.push({ id: p.id, pos: new Vector3(q.x, 0, q.z), radius: p.r });
+      const q = b.world(p.side, zf + p.front);
+      const o = b.world(p.side, zf + p.front + 1.8); // where the player reappears when leaving an interior
+      pois.push({ id: p.id, pos: new Vector3(q.x, 0, q.z), radius: p.r, out: new Vector3(o.x, 0, o.z), yaw: ry });
     }
     if (d.spawn) {
-      const q = b.world(0, r.zf + d.spawn.front);
+      const q = b.world(0, zf + d.spawn.front);
       spawn = new Vector3(q.x, 0, q.z);
     }
-    if (d.solid) {
+    if (d.solid && fit) {
+      const bb = new Box3().setFromObject(fit.holder);
+      colliders.push(box3(bb.min.x + 0.1, bb.min.z + 0.1, bb.max.x - 0.1, bb.max.z - 0.1));
+      contacts.push({ x: (bb.min.x + bb.max.x) / 2, z: (bb.min.z + bb.max.z) / 2, sx: bb.max.x - bb.min.x + 3, sz: bb.max.z - bb.min.z + 3 });
+    } else if (d.solid) {
       const xs = [], zs = [];
       for (const [lx, lz] of [[-bwid / 2, r.zb], [bwid / 2, r.zb], [-bwid / 2, r.zf], [bwid / 2, r.zf]]) {
         const q = b.world(lx, lz);
@@ -169,12 +190,33 @@ export function buildTown({ town, tiles, brand, quality, models = {} }) {
     holder.rotation.y = ry;
     holder.add(m);
     group.add(holder);
+    return { holder, w: size.x * s, h: size.y * s, front: (r.zb + r.zf) / 2 + (size.z * s) / 2 };
+  }
+
+  // skyscraper models spread along the skyline strip, in front of the filler towers
+  function placeSkyline(list, r) {
+    const n = Math.max(3, Math.round(r.w / 14));
+    for (let i = 0; i < n; i++) {
+      const src = list[Math.floor(hash(i, r.cz) * list.length)];
+      const m = litFromGltf(src.clone(true));
+      const box = new Box3().setFromObject(m), size = box.getSize(new Vector3()), ctr = box.getCenter(new Vector3());
+      const s = (26 + hash(i + 3, 7) * 22) / size.y; // 26-48 m tall
+      m.scale.setScalar(s);
+      m.position.set(-ctr.x * s, -box.min.y * s, -ctr.z * s);
+      const holder = new Group();
+      holder.position.set(r.cx - r.w / 2 + ((i + 0.5) / n) * r.w + (hash(i, 9) - 0.5) * 4, 0, r.cz + 3 + (hash(i, 5) - 0.5) * 3);
+      holder.rotation.y = ((tiles.modelYaw ?? 0) * Math.PI) / 180;
+      holder.add(m);
+      group.add(holder);
+    }
   }
 
   const built = b.build(materials);
   group.add(built);
 
   // instanced palms / lamps; low tier gets fake contact-shadow quads instead of a shadow map
+  if (tiles.useModels !== false) scatter({ cfg: tiles.scatter, rows, defs, T, grounds, models, pois, spawn, group, colliders, contacts });
+
   const litMat = materials.lit;
   if (palms.length) {
     const g = palmGeometries(), swayMat = makeLit({ vertexColors: true, sway: true });

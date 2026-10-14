@@ -11,15 +11,20 @@ import { buildTown, computeBounds, modelNames } from './world/town.js';
 import { loadModels, loadGltf } from './world/models.js';
 import { createInput } from './input.js';
 import { createPlayer } from './player.js';
-import { buildBank } from './world/bank.js';
+import { loadAnims, loadFbx } from './anims.js';
+import { buildInterior, interiorModelNames, interiorNpcNames } from './world/interior.js';
+import bankLayout from '../data/bank.json';
+import marketLayout from '../data/market.json';
 import { initDoors } from './world/doors.js';
 import { initPoiButton } from './ui/poi.js';
+import { initCamButton } from './ui/cambtn.js';
 import { loadSignFont } from './world/signs.js';
 import brand from '../data/brand.json';
 import townData from '../data/town.json';
 import tiles from '../data/tiles.json';
 
-// Shared handles for later phases (player, UI, bank interior).
+// Shared handles for later phases (player, UI, interiors).
+const LAYOUTS = { bank: bankLayout, market: marketLayout };
 export const game = { renderer: null, rig: null, scenes: {}, world: null, worlds: {}, player: null };
 // Per-frame callbacks: fn(dtSeconds, nowSeconds). Called only on rendered frames.
 export const updaters = [];
@@ -84,8 +89,8 @@ async function boot() {
   tickDebug = createDebug(renderer);
   progress(0.2);
 
-  const [, models, boy, girl] = await Promise.all([
-    loadSignFont(), loadModels(modelNames(tiles), (p) => progress(0.2 + p * 0.3)), loadGltf('kid_boy'), loadGltf('kid_girl'),
+  const [, models, boy, girl, anims, npcFbx] = await Promise.all([
+    loadSignFont(), loadModels([...modelNames(tiles), ...Object.values(LAYOUTS).flatMap(interiorModelNames)], (p) => progress(0.2 + p * 0.3)), loadGltf('kid_boy'), loadGltf('kid_girl'), loadAnims(), loadFbx(Object.values(LAYOUTS).flatMap(interiorNpcNames)),
   ]);
   progress(0.5);
 
@@ -96,9 +101,13 @@ async function boot() {
   scene.add(world.group);
   game.scenes.town = scene;
   game.world = world;
-  const bank = buildBank({ brand });
-  game.scenes.bank = bank.scene;
-  game.worlds = { town: world, bank };
+  const interiors = {};
+  game.worlds = { town: world };
+  for (const [name, layout] of Object.entries(LAYOUTS)) {
+    interiors[name] = buildInterior({ brand, layout, models, npcFbx, quality });
+    game.scenes[name] = interiors[name].scene;
+    game.worlds[name] = interiors[name];
+  }
   progress(0.7);
 
   game.rig = createCameraRig();
@@ -106,15 +115,17 @@ async function boot() {
   resize();
 
   const input = createInput({ canvas: $('c'), host: $('ui'), camera: game.rig.camera });
-  const player = createPlayer({ input, rig: game.rig, glbs: { boy, girl } });
+  const player = createPlayer({ input, rig: game.rig, glbs: { boy, girl }, anims });
   game.player = player;
   player.setLook('boy', 0);
   player.setWorld(world);
   player.teleport(world.spawn.x, world.spawn.z, Math.PI); // facing the bank, camera behind
   scene.add(player.group);
   updaters.push(player.update);
-  initDoors({ game, player, input, setActiveScene });
+  updaters.push((dt) => { for (const w of Object.values(interiors)) if (w.scene === active) w.update(dt); });
+  initDoors({ game, player, input, setActiveScene, interiors });
   initPoiButton($('ui'));
+  initCamButton($('ui'), game.rig);
 
   post = createPost(renderer, game.rig.camera, { outlined: player.outlined });
   const fx = createParticles({ pois: world.pois, bounds: world.bounds, budget: quality.particles });
@@ -133,7 +144,7 @@ async function boot() {
 
   setActiveScene(scene, 'town');
   await renderer.compileAsync(scene, game.rig.camera);
-  await renderer.compileAsync(bank.scene, game.rig.camera);
+  for (const w of Object.values(interiors)) await renderer.compileAsync(w.scene, game.rig.camera);
   progress(1);
 
   window.addEventListener('resize', resize);
