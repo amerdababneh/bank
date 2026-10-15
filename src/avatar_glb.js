@@ -1,5 +1,6 @@
 // Rigged GLB avatar (Tripo/Mixamo style) + accessory slots shared with the procedural avatar.
-import { AnimationMixer, Group, Box3 } from 'three/webgpu';
+import { AnimationMixer, Group, Box3, Vector3 } from 'three/webgpu';
+import { emit } from './bus.js';
 import { clone } from 'three/addons/utils/SkeletonUtils.js';
 import { litFromGltf, PLAYER_LAYER } from './world/light.js';
 import { loadModel } from './world/models.js';
@@ -32,6 +33,9 @@ export function createGlbAvatar({ scene, animations }, extra = {}) {
     if (o.isBone) {
       if (!bones.head && /head/i.test(o.name)) bones.head = o;
       if (!bones.hand && /hand/i.test(o.name)) bones.hand = o;
+      const n = o.name.toLowerCase().replace(/[^a-z]/g, '');
+      if (!bones.lfoot && n.endsWith('leftfoot')) bones.lfoot = o;
+      if (!bones.rfoot && n.endsWith('rightfoot')) bones.rfoot = o;
     }
   });
   root.add(model);
@@ -60,6 +64,20 @@ export function createGlbAvatar({ scene, animations }, extra = {}) {
   model.scale.setScalar(s);
   model.position.y = -box.min.y * s;
 
+  // Footstep sync: a foot 'lands' when its bone drops to (near) its lowest recent height.
+  // Emits bus 'step' once per landing, so the sound follows the actual animation at any speed.
+  const feet = [bones.lfoot, bones.rfoot].filter(Boolean).map((b) => ({ b, ground: Infinity, down: true }));
+  const fp = new Vector3(), rp = new Vector3();
+  function footfalls(dt) {
+    root.getWorldPosition(rp);
+    for (const f of feet) {
+      const y = f.b.getWorldPosition(fp).y - rp.y;
+      f.ground = Math.min(f.ground + dt * 0.03, y); // slowly re-learns the planted height
+      if (!f.down && y < f.ground + 0.025) { f.down = true; emit('step'); }
+      else if (f.down && y > f.ground + 0.06) f.down = false;
+    }
+  }
+
   return {
     root,
     update(dt, speed) {
@@ -75,6 +93,7 @@ export function createGlbAvatar({ scene, animations }, extra = {}) {
       }
       talk?.setEffectiveWeight((1 - w) * tw);
       mixer.update(dt);
+      if (w > 0.5 && speed > 0.3) footfalls(dt);
     },
     setAccessory: slotSetter(bones),
     setTalking(on) { talking = !!on; },

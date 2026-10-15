@@ -60,7 +60,7 @@ export function buildInterior({ brand, layout, models = {}, npcFbx = {}, quality
     update(dt) { for (const m of mixers) m.update(dt); },
     bounds: { minX: -W / 2, maxX: W / 2, minZ: -D / 2, maxZ: D / 2 },
     groundAt: () => FLOOR_TOP,
-    spawn: new Vector3(0, 0, D / 2 - 3.5),
+    spawn: layout.spawn ? new Vector3(layout.spawn[0], 0, layout.spawn[1]) : new Vector3(0, 0, D / 2 - 3.5), // [x, z]
   };
 }
 

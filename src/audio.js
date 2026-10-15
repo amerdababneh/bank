@@ -1,10 +1,11 @@
-// Web Audio: background loop + footsteps that fade in while the player moves.
+import { on } from './bus.js';
+
+// Web Audio: background loop + one footstep sound played on each foot landing.
 // Browsers only allow sound after a user gesture, so the context starts on the first tap/key.
 // Files: public/audio/<name>.mp3. Missing files are simply silent.
 
 const FILES = { music: 'loop', steps: 'steps' };
-const VOL = { music: 0.35, steps: 0.6 };
-const STEP_REF = 2.8; // m/s at which the steps play at normal rate
+const VOL = { music: 0.15, steps: 0.36 };
 const DUCK = 0.25;    // music level (x normal) while a voice line plays
 
 let ctx = null, master = null, muted = false;
@@ -41,10 +42,14 @@ async function start() {
   master.connect(ctx.destination);
   const [music, steps] = await Promise.all([load(FILES.music), load(FILES.steps)]);
   if (music) loop('music', music, VOL.music);
-  if (steps) loop('steps', steps, 0); // silent until the player moves
+  stepBuf = steps;
+  gains.steps = ctx.createGain();
+  gains.steps.gain.value = VOL.steps;
+  gains.steps.connect(master);
 }
 
 export function initAudio() {
+  on('step', playStep);
   const unlock = () => {
     start();
     if (ctx?.state === 'suspended') ctx.resume();
@@ -58,13 +63,16 @@ export function initAudio() {
   });
 }
 
-// Per frame: speed in m/s. Fades the steps in/out; cadence follows the speed. No allocations.
-export function setStepSpeed(speed) {
-  const g = gains.steps;
-  if (!g) return;
-  const moving = speed > 0.3;
-  g.gain.setTargetAtTime(moving ? VOL.steps : 0, ctx.currentTime, moving ? 0.05 : 0.08);
-  if (moving) sources.steps.playbackRate.value = Math.min(1.25, Math.max(0.75, speed / STEP_REF));
+// One footstep per landing (bus 'step' from the avatar), with a little pitch variety.
+let stepBuf = null, lastStep = 0;
+function playStep() {
+  if (!stepBuf || !ctx || ctx.currentTime - lastStep < 0.12) return; // never machine-gun
+  lastStep = ctx.currentTime;
+  const src = ctx.createBufferSource();
+  src.buffer = stepBuf;
+  src.playbackRate.value = 0.9 + Math.random() * 0.2;
+  src.connect(gains.steps);
+  src.start();
 }
 
 // For the settings screen (P4).

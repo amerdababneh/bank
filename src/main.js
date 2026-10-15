@@ -4,7 +4,7 @@ import { quality, detectTier, applyTier, frameGate, adaptResolution, createDebug
 import { createCameraRig } from './camera.js';
 import { createPost, initFx, onFx, postActive, createWind, uWindCenter, createFlags } from './world/fx.js';
 import { createParticles } from './world/particles.js';
-import { PLAYER_LAYER } from './world/light.js';
+import { PLAYER_LAYER, setIndoor } from './world/light.js';
 import { initFxPanel } from './ui/fxpanel.js';
 import { setupSky, setupSun } from './world/light.js';
 import { buildTown, computeBounds, modelNames } from './world/town.js';
@@ -13,7 +13,7 @@ import { createInput } from './input.js';
 import { createPlayer } from './player.js';
 import { createEconomy } from './economy.js';
 import { loadSave, initAutosave } from './save.js';
-import { initAudio, setStepSpeed } from './audio.js';
+import { initAudio } from './audio.js';
 import jobs from '../data/jobs.json';
 import items from '../data/items.json';
 import start from '../data/economy.json';
@@ -30,6 +30,8 @@ import { openBank } from './ui/bank.js';
 import { openAtm } from './ui/atm.js';
 import { openSettings, initSettings } from './ui/settings.js';
 import { on } from './bus.js';
+import { dialogGates } from './ui/dialog.js';
+import { startJob } from './jobs/runner.js';
 import { loadSignFont } from './world/signs.js';
 import brand from '../data/brand.json';
 import townData from '../data/town.json';
@@ -140,7 +142,6 @@ async function boot() {
   scene.add(player.group);
   updaters.push(player.update);
   initAudio();
-  updaters.push(() => setStepSpeed(player.speed));
   updaters.push((dt) => { for (const w of Object.values(interiors)) if (w.scene === active) w.update(dt); });
   initDoors({ game, player, input, setActiveScene, interiors });
   initPoiButton($('ui'));
@@ -150,7 +151,12 @@ async function boot() {
   // P4 UI: HUD, bank (after the teller conversation), ATM, settings; full-screen screens pause the 3D
   initSettings();
   const hud = initHud({ host: $('ui'), econ: game.econ, items, onSettings: () => openSettings({ onDigits: () => hud.draw() }) });
-  on('dialog:end', ({ next }) => { if (next === 'open_account' || next === 'bank') openBank({ econ: game.econ, items, bankName: brand.bankName }); });
+  on('dialog:end', ({ next }) => {
+    if (next === 'open_account' || next === 'bank') openBank({ econ: game.econ, items, bankName: brand.bankName });
+    else if (next?.startsWith('job:')) startJob({ econ: game.econ, jobs, jobId: next.slice(4) });
+  });
+  // P5: the manager only offers work when the kid can do it (energy left, room in the wallet)
+  dialogGates.market_checkout = () => { const c = game.econ.canEarn('market'); return c.ok ? null : c.error; };
   on('interact', ({ poiId }) => { if (poiId === 'atm_out') openAtm({ econ: game.econ, rig: game.rig, player, anchors: world.anchors }); });
   on('ui:modal', ({ open, live }) => { setRenderPaused(open && !live); input.setEnabled(!open); });
 
@@ -171,7 +177,17 @@ async function boot() {
 
   setActiveScene(scene, 'town');
   await renderer.compileAsync(scene, game.rig.camera);
-  for (const w of Object.values(interiors)) await renderer.compileAsync(w.scene, game.rig.camera);
+  // Warm up every interior behind the loader: the kid's indoor materials, NPCs, the post pipeline and
+  // the one-time interior shadow bake, so the first door is quick (no long fade on first entry).
+  setIndoor(player.group, true);
+  for (const w of Object.values(interiors)) {
+    w.scene.add(player.group);
+    await renderer.compileAsync(w.scene, game.rig.camera);
+    if (postActive()) post.render(w.scene); else renderer.render(w.scene, game.rig.camera);
+  }
+  setIndoor(player.group, false);
+  scene.add(player.group);
+  if (postActive()) post.render(scene);
   progress(1);
 
   window.addEventListener('resize', resize);

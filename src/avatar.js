@@ -5,6 +5,7 @@ import {
 import { makeLit } from './world/light.js';
 import { createGlbAvatar, slotSetter } from './avatar_glb.js';
 import data from '../data/avatars.json';
+import { emit } from './bus.js';
 
 const SPEED_REF = 4; // m/s that maps to a full stride
 
@@ -70,7 +71,9 @@ export function createProceduralAvatar({ gender = 'boy', color = 0 }) {
     update(dt, speed) {
       const k = Math.min(1, speed / SPEED_REF);
       clock += dt;
+      const prev = phase;
       phase += dt * (2 + speed * 1.1);
+      if (k > 0.1 && Math.floor(phase / Math.PI) !== Math.floor(prev / Math.PI)) emit('step');
       const s = Math.sin(phase), c = Math.cos(phase);
       const sq = 0.05 * Math.sin(phase * 2) * k + 0.018 * Math.sin(clock * 2.4) * (1 - k); // squash + breathing
       body.position.y = Math.abs(s) * 0.09 * k;

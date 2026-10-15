@@ -204,28 +204,5 @@ body.cine .hud { opacity: 0; pointer-events: none; }
 .toast.out { opacity: 0; transform: translateY(-10px); }
 @keyframes toast-in { from { opacity: 0; transform: translateY(-12px); } }
 
-/* ---- ATM: the UI sits on the zoomed-in ATM's screen (no backdrop, glowing display) */
-.screen.atm { background: none; transition-delay: 0.45s; }
-.screen.atm .screen-card {
-  width: min(72vw, 560px);
-  max-height: 74vh;
-  border: 6px solid #1c2330;
-  border-radius: 18px;
-  background: linear-gradient(160deg, rgba(10, 70, 110, 0.92), rgba(4, 30, 56, 0.95));
-  -webkit-backdrop-filter: none;
-  backdrop-filter: none;
-  box-shadow: 0 0 0 3px #3b4252, 0 0 40px rgba(110, 210, 255, 0.55), inset 0 0 30px rgba(120, 220, 255, 0.25);
-  color: #dff6ff;
-}
-.screen.atm .screen-head { background: rgba(0, 0, 0, 0.25); }
-.screen.atm .screen-head h2 { color: #8fe3ff; letter-spacing: 1px; }
-.screen.atm .screen-head .close { color: #dff6ff; background: rgba(255, 255, 255, 0.12); }
-.screen.atm .step-q, .screen.atm .hint { color: #dff6ff; }
-.screen.atm .amount-show, .screen.atm .bal-card b { color: #8fe3ff; }
-.screen.atm .pin-dots i { border-color: #8fe3ff; }
-.screen.atm .pin-dots i.on { background: #8fe3ff; }
-.screen.atm .bal-card { background: rgba(255, 255, 255, 0.1); color: #dff6ff; }
-.screen.atm .kbtn { color: #0a3a5c; background: #e6f6ff; }
-.screen.atm .kbtn.primary { color: #fff; background: linear-gradient(180deg, #2fb4f0, #0075b0); }
-.screen.atm .pin-keys { grid-template-columns: repeat(3, 64px); gap: 8px; }
-.screen.atm .pin-keys .key { min-height: 54px; font-size: 24px; }
+.hud-sleep[hidden] { display: none; }
+.hud-sleep { animation: bump 1.2s ease-in-out infinite; }

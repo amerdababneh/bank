@@ -1,8 +1,10 @@
-{ "note": "Interior layout. size [W, D] in m: x -W/2..W/2, z -D/2 (back wall) .. D/2 (entrance, camera side). door/exit: town and inside POI ids. colors (optional): wall/floor/accent, default brand. pois: extra POIs {id,x,z,r}. Items: ry in degrees; size by h (height) or w (largest footprint side); y lifts an item; walk:true = no collider. blockers: invisible walls {x0,z0,x1,z1} (e.g. staff area behind the desks).",
+{ "note": "Interior layout. size [W, D] in m: x -W/2..W/2, z -D/2 (back wall) .. D/2 (entrance, camera side). door/exit: town and inside POI ids. colors (optional): wall/floor/accent, default brand. pois: extra POIs {id,x,z,r}. Items: ry in degrees; size by h (height) or w (largest footprint side); y lifts an item; walk:true = no collider. blockers: invisible walls {x0,z0,x1,z1} (e.g. staff area behind the desks). spawn: [x, z] where the player appears on entering.",
  "size": [ 12, 16
  ],
  "door": "bank_door",
  "exit": "bank_exit",
+ "spawn": [ 0, 0.5
+ ],
  "pois": [ { "id": "teller", "x": 0, "z": -4.2, "r": 1.5, "talk": { "x": 0, "y": 1.45, "z": -6.1 } }
  ],
  "blockers": [ { "x0": -6, "z0": -8, "x1": 6, "z1": -4.95 }

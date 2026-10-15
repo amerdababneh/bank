@@ -40,5 +40,25 @@
         }
       ]
     }
+  },
+  "market_checkout": {
+    "again": {
+      "npc": "npc.manager",
+      "next": "job:market",
+      "lines": [
+        {
+          "who": "npc",
+          "text": "dlg.manager.offer"
+        },
+        {
+          "who": "kid",
+          "text": "dlg.kid.work"
+        },
+        {
+          "who": "npc",
+          "text": "dlg.manager.rules"
+        }
+      ]
+    }
   }
 }

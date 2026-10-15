@@ -1,3 +1,14 @@
 {
-  "market": {"name": "ترتيب رفوف السوبرماركت", "place": "market", "pay": 15, "starBonus": 2, "energy": 1}
+ "market": {
+  "name": "ترتيب رفوف السوبرماركت",
+  "place": "market",
+  "pay": 15,
+  "starBonus": 2,
+  "energy": 1,
+  "game": "shelves",
+  "seconds": 40,
+  "target": 10,
+  "shelves": [ { "name": "ألبان", "color": "#e8f4fb", "items": [ "🥛", "🧀", "🧈", "🍦" ] }, { "name": "مخبوزات", "color": "#fbefdc", "items": [ "🍞", "🥐", "🥖", "🍪" ] }, { "name": "فواكه", "color": "#eaf7e3", "items": [ "🍎", "🍌", "🍊", "🍇" ] }, { "name": "مشروبات", "color": "#fde8ec", "items": [ "🧃", "💧", "🥤", "🍵" ] }
+  ]
+ }
 }

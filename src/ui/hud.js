@@ -27,6 +27,9 @@ export function initHud({ host, econ, items, onSettings }) {
   energy.setAttribute('aria-label', t('hud.energy'));
   const bolts = [0, 1, 2].map(() => el('i', '', energy, '⚡'));
 
+  // out of energy: a moon button starts the next day
+  const sleep = button(hud, '🌙', () => { econ.nextDay(); toast(t('day.new'), 'ok'); }, 'hud-gear hud-sleep');
+  sleep.setAttribute('aria-label', t('day.sleep'));
   const gear = button(hud, '⚙️', onSettings, 'hud-gear');
   gear.setAttribute('aria-label', t('hud.settings'));
 
@@ -36,6 +39,7 @@ export function initHud({ host, econ, items, onSettings }) {
     bank.textContent = s.account.opened ? fmt(s.bank) : '—';
     walletPill.classList.toggle('full', s.wallet >= s.walletCap);
     bolts.forEach((b, i) => b.classList.toggle('off', i >= s.energy));
+    sleep.hidden = s.energy > 0;
     const g = s.goal && items[s.goal];
     goal.hidden = !g;
     if (g) {

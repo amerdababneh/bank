@@ -147,7 +147,9 @@ export function buildTown({ town, tiles, brand, quality, models = {} }) {
       // tiles.modelYaw: whole pack; d.modelYaw: this tile only (e.g. 180 = keep the model, put door/sign behind)
       fit = placeModel(model, r, ry + (((tiles.modelYaw ?? 0) + (d.modelYaw ?? 0)) * Math.PI) / 180);
       const text = d.sign ? t(d.sign) : d.build === 'souq' ? t(`sign.souq.${1 + Math.floor(hash(r.cz, r.cx) * 5)}`) : null;
-      if (text) c.sign(text, Math.min(5, fit.w * 0.6), 1.1, 0, Math.min(4, fit.h * 0.55), fit.front + 0.15);
+      // signAt { y, front, w, h, side } and signStyle { bg, fg, border } override the default placement/look
+      const sa = d.signAt ?? {};
+      if (text) c.sign(text, sa.w ?? Math.min(5, fit.w * 0.6), sa.h ?? 1.1, sa.side ?? 0, sa.y ?? Math.min(4, fit.h * 0.55), fit.front + (sa.front ?? 0.15), d.signStyle);
     } else BUILDERS[d.build]?.(c, d, r);
     if (d.palm) c.palm(0, 0);
 

@@ -7,6 +7,10 @@ import { t } from '../i18n.js';
 import dialogs from '../../data/dialogs.json';
 import brand from '../../data/brand.json';
 import { playVoice } from '../audio.js';
+import { toastError } from './widgets.js';
+
+// gates[poiId]() -> error code to block a conversation before it starts (e.g. too tired to work)
+export const dialogGates = {};
 
 const KID_HEAD = 1.15, TYPE_MS = 28;
 
@@ -88,6 +92,8 @@ export function initDialogs({ host, player, rig, input, econ, worlds }) {
     const set = dialogs[poiId];
     const poi = set && Object.values(worlds).flatMap((w) => w.pois).find((p) => p.id === poiId && p.talk);
     if (!poi || conv) return;
+    const block = dialogGates[poiId]?.();
+    if (block) return toastError(block);
     conv = set.first?.when === 'noAccount' && !econ.state.account.opened ? set.first : set.again;
     id = poiId;
     line = 0;

@@ -1,0 +1,162 @@
+/* ATM fascia: grey metal bezel, side keys lined up with the option pills, branded display. */
+.screen.atm { background: none; transition-delay: 0.45s; }
+.screen.atm .screen-card { width: auto; background: none; border: 0; box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; }
+.screen.atm .screen-head { display: none; }
+.screen.atm .screen-body { padding: 0; overflow: visible; }
+
+.atm-face {
+  --stage-h: min(250px, 48vh);
+  --head-h: 52px;
+  position: relative;
+  display: grid;
+  grid-template-columns: 54px min(66vw, 560px) 54px;
+  gap: 10px;
+  padding: 34px 14px 46px;
+  border-radius: 22px;
+  background: linear-gradient(180deg, #4a515c, #2c3139 14%, #23272e);
+  box-shadow: 0 0 0 6px #c9ced6, 0 0 0 9px #9aa1ab, 0 18px 40px rgba(0, 0, 0, 0.4);
+  direction: ltr;
+}
+.atm-brand {
+  position: absolute;
+  top: 8px;
+  left: 76px;
+  font: italic 800 17px/1 var(--font);
+  letter-spacing: 1px;
+  color: #8f98a5;
+  text-shadow: 0 1px 0 #1b1f25;
+}
+
+/* side keys: 4 per side, aligned with the 4 option rows of the display */
+.atm-keys { display: flex; flex-direction: column; justify-content: space-around; height: var(--stage-h); margin-top: var(--head-h); }
+.atm-key {
+  min-height: 0;
+  height: 34px;
+  padding: 0;
+  border-radius: 7px;
+  background: linear-gradient(180deg, #e9ecf0, #b9bfc7);
+  box-shadow: 0 3px 0 #6f7680, inset 0 1px 0 #fff;
+}
+.atm-key.live { background: linear-gradient(180deg, #ffffff, #cfd5dc); }
+.atm-key:active { transform: translateY(2px); box-shadow: 0 1px 0 #6f7680; }
+
+/* display */
+.atm-display {
+  border-radius: 6px;
+  overflow: hidden;
+  background: linear-gradient(180deg, #46566f, #2c3a52);
+  box-shadow: 0 0 0 4px #0c0f14, 0 0 26px rgba(140, 190, 255, 0.35);
+  direction: rtl;
+}
+.atm-head { height: var(--head-h); display: flex; align-items: center; gap: 10px; padding: 0 14px; background: #fff; }
+.atm-logo { height: 34px; }
+.atm-bank { flex: 1; font-size: 18px; color: var(--c-primary); }
+.atm-help { font-size: 13px; color: #6b7280; }
+.atm-stage { position: relative; height: var(--stage-h); color: #f2f6ff; }
+.atm-mid {
+  position: absolute;
+  inset: 0 30%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  text-align: center;
+}
+.atm-mid:has(.pinpad), .atm-mid:has(.amount) { inset: 0 2%; justify-content: flex-start; padding-top: 6px; }
+.atm-mid h3 { margin: 0; font-size: 22px; }
+.atm-mid p { margin: 0; font-size: 15px; opacity: 0.85; }
+.atm-big { font-size: 38px; font-weight: 800; color: #8fe3ff; }
+
+/* option pills sit on the left/right edges, one per key row */
+.atm-opts { position: absolute; top: 0; bottom: 0; width: 34%; padding: 0 8px; display: flex; flex-direction: column; justify-content: space-around; pointer-events: none; }
+.atm-opts.left { left: 0; }
+.atm-opts.right { right: 0; }
+.atm-slot { height: 40px; display: flex; }
+.atm-opts.right .atm-slot { justify-content: flex-end; }
+.atm-opt {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 0;
+  height: 40px;
+  padding: 0 10px;
+  border-radius: 999px;
+  font-size: 16px;
+  color: #13233b;
+  background: #fff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+}
+.atm-opts.right .atm-opt { flex-direction: row-reverse; }
+.atm-opt i { width: 24px; height: 24px; display: grid; place-items: center; border-radius: 50%; font-style: normal; font-weight: 800; color: #fff; background: #13233b; }
+.atm-opt.off { opacity: 0.35; }
+
+/* the card */
+.atm-card {
+  position: relative;
+  width: 170px;
+  height: 106px;
+  margin-top: 6px;
+  padding: 10px 12px;
+  border: 0;
+  border-radius: 12px;
+  color: #fff;
+  font-family: var(--font);
+  text-align: right;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--c-primary) 70%, white), var(--c-primary) 55%, var(--c-accent));
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.35);
+  cursor: pointer;
+  animation: atm-card-wiggle 1.6s ease-in-out infinite;
+}
+.atm-card .chip { position: absolute; left: 14px; top: 34px; width: 30px; height: 22px; border-radius: 5px; background: linear-gradient(135deg, #f7dc8a, #c99a2e); }
+.atm-card b { display: block; font-size: 16px; }
+.atm-card .num { position: absolute; left: 14px; bottom: 26px; direction: ltr; letter-spacing: 2px; font-size: 14px; }
+.atm-card small { position: absolute; right: 12px; bottom: 8px; font-size: 13px; }
+.atm-card.in { animation: atm-card-in 0.65s ease-in forwards; }
+.atm-card.out { animation: atm-card-out 0.6s ease-out both; cursor: default; }
+@keyframes atm-card-wiggle { 50% { transform: translateY(-5px) rotate(-1deg); } }
+@keyframes atm-card-in { to { transform: translateY(-60px) scaleY(0.2); opacity: 0; } }
+@keyframes atm-card-out { from { transform: translateY(-60px) scaleY(0.2); opacity: 0; } }
+
+/* cash slot under the display: notes slide out */
+.atm-cash {
+  position: absolute;
+  left: 50%;
+  bottom: 12px;
+  width: 46%;
+  height: 12px;
+  transform: translateX(-50%);
+  border-radius: 6px;
+  background: #0b0d11;
+  box-shadow: inset 0 2px 4px #000;
+}
+.atm-cash::after {
+  content: '💵💵💵';
+  position: absolute;
+  left: 50%;
+  top: 4px;
+  font-size: 34px;
+  letter-spacing: -14px;
+  transform: translate(-50%, -30px);
+  opacity: 0;
+}
+.atm-cash.out::after { animation: atm-cash 1.6s ease-out; }
+@keyframes atm-cash { 20% { opacity: 1; } 60% { transform: translate(-50%, 6px); opacity: 1; } to { transform: translate(-50%, 12px); opacity: 0; } }
+
+@media (max-width: 600px) {
+  .atm-face { grid-template-columns: 34px min(72vw, 560px) 34px; gap: 6px; padding: 30px 8px 42px; }
+  .atm-key { height: 28px; }
+  .atm-opt { font-size: 13px; padding: 0 6px; gap: 4px; }
+  .atm-mid { inset: 0 26%; }
+}
+
+/* compact PIN pad and amount chips inside the ATM display */
+.atm-mid .pin-dots { margin-bottom: 6px; }
+.atm-mid .pin-dots i { width: 16px; height: 16px; border-color: #8fe3ff; }
+.atm-mid .pin-dots i.on { background: #8fe3ff; }
+.atm-mid .pin-keys { grid-template-columns: repeat(3, 58px); gap: 5px; }
+.atm-mid .pin-keys .key { min-height: 0; height: calc((var(--stage-h) - 80px) / 4); font-size: 20px; }
+.atm-mid .amount-show { margin: 2px 0 6px; font-size: 28px; color: #8fe3ff; }
+.atm-mid .chip { min-width: 54px; min-height: 0; height: 40px; font-size: 17px; }
+.atm-mid .chips { gap: 5px; max-width: 64%; }

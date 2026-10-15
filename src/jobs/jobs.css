@@ -1,0 +1,48 @@
+/* Job screens (shelf stocking) */
+.screen.job .screen-card { width: min(96vw, 760px); }
+.shelves-game { display: flex; flex-direction: column; gap: 10px; user-select: none; }
+.sg-top { display: flex; justify-content: space-between; font-size: 22px; }
+.sg-time.low { color: #c0392b; animation: bump 0.5s ease infinite; }
+.sg-shelves { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+.sg-shelf {
+  min-height: 92px;
+  padding: 8px;
+  border-radius: 18px;
+  border: 3px dashed rgba(0, 0, 0, 0.15);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  cursor: pointer;
+}
+.sg-name { font-size: 19px; color: var(--c-primary); }
+.sg-stock { display: flex; flex-wrap: wrap; justify-content: center; gap: 2px; font-size: 24px; min-height: 30px; }
+.sg-put { animation: sg-pop 0.3s ease; }
+@keyframes sg-pop { from { transform: scale(0); } }
+.sg-shelf.ok { animation: sg-ok 0.4s ease; }
+@keyframes sg-ok { 40% { box-shadow: 0 0 0 6px #2ecc71; transform: scale(1.04); } }
+.sg-shelf.no { animation: sg-no 0.4s ease; }
+@keyframes sg-no { 20%, 60% { transform: translateX(-8px); box-shadow: 0 0 0 5px #e74c3c; } 40%, 80% { transform: translateX(8px); } }
+.sg-tray {
+  height: 110px;
+  display: grid;
+  place-items: center;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.6);
+}
+.sg-item {
+  font-size: 66px;
+  line-height: 1;
+  touch-action: none;
+  cursor: grab;
+  animation: sg-pop 0.25s ease;
+  filter: drop-shadow(0 6px 6px rgba(0, 0, 0, 0.25));
+}
+.sg-item.held { position: relative; z-index: 5; cursor: grabbing; }
+.sg-item.picked { outline: 4px solid var(--c-accent); border-radius: 18px; }
+.sg-hint { opacity: 0.6; font-size: 15px; }
+.job-result { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.job-result h3 { margin: 0; font-size: 30px; color: var(--c-primary); }
+.job-result .stars { font-size: 52px; color: #f4b73c; letter-spacing: 6px; text-shadow: 0 3px 0 rgba(0, 0, 0, 0.15); }
+.job-result p { margin: 0; font-size: 20px; }
+.job-result .pay { font-size: 28px; font-weight: 800; color: #1f8a4c; }
+@media (min-width: 700px) { .sg-shelves { grid-template-columns: repeat(4, 1fr); } }

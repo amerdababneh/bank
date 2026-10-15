@@ -62,6 +62,8 @@ export function fakeSun(base) {
 const OCC_R = 1.5;
 const uFocus = uniform(new Vector3(0, -1000, 0));
 export const setOcclusionFocus = (x, y, z) => { uFocus.value.set(x, y, z); };
+const uOccOn = uniform(1); // 0 indoors: no see-through holes in interiors
+export const setOcclusionEnabled = (on) => { uOccOn.value = on ? 1 : 0; };
 const occAB = uFocus.sub(cameraPosition);
 const occAP = positionWorld.sub(cameraPosition);
 const occT = occAP.dot(occAB).div(occAB.dot(occAB));
@@ -69,7 +71,7 @@ const occD = occAP.sub(occAB.mul(occT)).length();
 const occFade = smoothstep(OCC_R * 0.45, OCC_R, occD).oneMinus()
   .mul(step(0, occT)).mul(step(occT, 0.9)).mul(step(0.3, positionWorld.y));
 const ditherNoise = fract(float(52.9829189).mul(fract(dot(screenCoordinate.xy, vec2(0.06711056, 0.00583715)))));
-const OCC_MASK = ditherNoise.greaterThanEqual(occFade.mul(0.88)); // true = keep the fragment
+const OCC_MASK = ditherNoise.greaterThanEqual(occFade.mul(0.88).mul(uOccOn)); // true = keep the fragment
 const KEEP = bool(true); // the shadow pass must not see the hole
 
 // rim light: bright edge facing away from the camera (player only)
