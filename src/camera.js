@@ -75,11 +75,12 @@ export function createCameraRig() {
     place();
   };
   // Cinematic: rig.shot(pos, look) cuts straight to a framed shot; rig.shot(null) cuts back.
-  rig.shot = (pos, lookAt) => {
-    if (!pos) { cineOn = false; blend = 0; return; } // hard cut back to the follow camera
+  // smooth: ease in/out of the shot (e.g. zooming onto the ATM) instead of cutting
+  rig.shot = (pos, lookAt, smooth = false) => {
+    if (!pos) { cineOn = false; if (!smooth) blend = 0; return; } // cut (or ease) back to the follow camera
     snapShot = true; // hard cut between shots, like film editing
     cineOn = true;
-    blend = 1;
+    if (!smooth) blend = 1;
     cinePos.copy(pos);
     cineLook.copy(lookAt);
   };

@@ -1,0 +1,231 @@
+/* Kid-style screens, HUD, toasts. Brand colours come from CSS vars set in main.js. */
+
+/* ---- buttons */
+.kbtn {
+  min-height: 56px;
+  padding: 8px 18px;
+  border: 0;
+  border-radius: 18px;
+  font: 700 20px var(--font);
+  color: var(--c-primary);
+  background: #fff;
+  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.15);
+  cursor: pointer;
+  transition: transform 0.08s ease;
+}
+.kbtn:active { transform: scale(0.94) translateY(2px); box-shadow: 0 2px 0 rgba(0, 0, 0, 0.15); }
+.kbtn.primary {
+  color: #fff;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--c-primary) 75%, white), var(--c-primary));
+  box-shadow: 0 5px 0 color-mix(in srgb, var(--c-primary) 60%, black);
+}
+.kbtn.big { min-height: 66px; min-width: 64%; font-size: 24px; margin: 10px auto 0; display: block; }
+.kbtn.on { outline: 4px solid var(--c-accent); }
+
+/* ---- screen shell */
+.screen {
+  position: fixed;
+  inset: 0;
+  z-index: 35;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: calc(var(--safe-t) + 10px) 10px calc(var(--safe-b) + 10px);
+  background: rgba(0, 17, 26, 0.25); /* the game stays visible behind, slightly dimmed */
+  opacity: 0;
+  transition: opacity 0.22s ease;
+}
+.screen.on { opacity: 1; }
+.screen-card {
+  width: min(96vw, 620px);
+  max-height: 100%;
+  display: flex;
+  flex-direction: column;
+  border-radius: 28px;
+  background: color-mix(in srgb, var(--c-secondary) 62%, transparent);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  border: 2px solid rgba(255, 255, 255, 0.6);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.25);
+  overflow: hidden;
+}
+.screen-head { display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: rgba(255, 255, 255, 0.55); }
+.screen-head h2 { flex: 1; margin: 0; font-size: 24px; color: var(--c-primary); }
+.screen-head .close { min-height: 48px; width: 48px; padding: 0; font-size: 22px; background: var(--c-secondary); }
+.screen-body { padding: 14px; overflow: auto; text-align: center; }
+
+.step-title { margin: 0 0 8px; font-size: 24px; color: var(--c-primary); }
+.step-q { margin: 6px 0 10px; font-size: 22px; font-weight: 700; }
+.hint { margin: 4px 0 10px; font-size: 18px; opacity: 0.8; }
+.tip { margin: 6px auto 12px; padding: 8px 14px; max-width: 440px; border-radius: 14px; font-size: 17px; background: #fff3d6; color: #6b4300; }
+.name-in {
+  width: min(80%, 360px);
+  height: 60px;
+  padding: 0 16px;
+  border: 3px solid var(--c-primary);
+  border-radius: 18px;
+  font: 700 24px var(--font);
+  text-align: center;
+}
+
+/* ---- PIN pad */
+.pinpad { display: inline-block; }
+.pin-dots { display: flex; justify-content: center; gap: 14px; margin-bottom: 12px; }
+.pin-dots i { width: 22px; height: 22px; border-radius: 50%; border: 3px solid var(--c-primary); }
+.pin-dots i.on { background: var(--c-primary); }
+.pin-keys { display: grid; grid-template-columns: repeat(3, 76px); gap: 10px; direction: ltr; }
+.pin-keys .key { min-height: 66px; font-size: 28px; }
+.pin-keys .del { color: #b3261e; }
+.pinpad.shake { animation: shake 0.4s; }
+@keyframes shake { 20%, 60% { transform: translateX(-10px); } 40%, 80% { transform: translateX(10px); } }
+
+/* ---- amount chips */
+.amount-show { margin: 4px 0 10px; font-size: 40px; font-weight: 800; color: var(--c-primary); }
+.chips { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+.chip { min-width: 72px; min-height: 60px; font-size: 22px; }
+.chip.all { color: #fff; background: var(--c-accent); }
+
+/* ---- tabs and pages */
+.tabs { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 6px; margin-bottom: 8px; }
+.tab { flex: 1 0 auto; min-height: 50px; font-size: 17px; padding: 6px 12px; }
+.tab.on { color: #fff; background: var(--c-primary); outline: none; }
+.big-balances { display: flex; gap: 10px; justify-content: center; }
+.bal-card { flex: 1; max-width: 240px; padding: 14px; border-radius: 22px; background: rgba(255, 255, 255, 0.7); display: flex; flex-direction: column; gap: 2px; }
+.bal-card.solo { margin: 0 auto 10px; }
+.bal-card .ic { font-size: 40px; }
+.bal-card b { font-size: 30px; color: var(--c-primary); }
+.goal-now { padding: 12px; margin-bottom: 8px; border-radius: 20px; background: rgba(255, 255, 255, 0.7); display: flex; flex-direction: column; gap: 4px; }
+.goal-now .ic { font-size: 44px; }
+.progress { height: 18px; border-radius: 999px; background: #e3e8ec; overflow: hidden; }
+.progress i { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--c-accent), color-mix(in srgb, var(--c-accent) 60%, white)); }
+.item-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 8px; }
+.item { display: flex; flex-direction: column; align-items: center; gap: 0; padding: 8px; font-size: 16px; }
+.item .ic { font-size: 34px; }
+.item small { opacity: 0.7; }
+.tx-list { display: flex; flex-direction: column; gap: 6px; text-align: right; }
+.tx { display: grid; grid-template-columns: 1fr auto auto; gap: 10px; align-items: center; padding: 10px 14px; border-radius: 14px; background: rgba(255, 255, 255, 0.7); font-size: 17px; }
+.tx small { opacity: 0.6; }
+.tx b { direction: ltr; font-size: 20px; }
+.tx.earn b, .tx.withdraw b { color: #1f8a4c; }
+.tx.deposit b, .tx.buy b, .tx.give b { color: #b3261e; }
+.atm-menu { display: flex; flex-direction: column; gap: 6px; }
+.set-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 4px; font-size: 20px; }
+.seg { display: flex; gap: 6px; }
+.seg .kbtn { min-height: 50px; font-size: 18px; padding: 6px 14px; }
+
+/* ---- HUD (top-right) */
+.hud {
+  position: fixed;
+  top: calc(var(--safe-t) + 10px);
+  right: calc(var(--safe-r) + 10px);
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: opacity 0.2s;
+}
+.hud.dim { opacity: 0; pointer-events: none; }
+body.cine .hud { opacity: 0; pointer-events: none; }
+.hud-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 44px;
+  padding: 0 14px 0 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
+  font-size: 20px;
+}
+.hud-pill .ic { font-size: 22px; }
+.hud-pill b { color: var(--c-primary); }
+.hud-pill.full b { color: #b3261e; }
+.hud-pill.bump { animation: bump 0.35s ease; }
+@keyframes bump { 50% { transform: scale(1.18); } }
+.hud-goal { position: relative; width: 48px; height: 48px; }
+.hud-goal[hidden] { display: none; }
+.hud-goal svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+.hud-goal circle { fill: rgba(255, 255, 255, 0.92); stroke-width: 5; }
+.hud-goal .track { stroke: #dfe6ea; }
+.hud-goal .fill { fill: none; stroke: var(--c-accent); stroke-linecap: round; transition: stroke-dashoffset 0.6s ease; }
+.hud-goal span { position: absolute; inset: 0; display: grid; place-items: center; font-size: 22px; }
+.hud-energy { display: flex; padding: 0 8px; height: 44px; align-items: center; border-radius: 999px; background: rgba(255, 255, 255, 0.92); }
+.hud-energy i { font-style: normal; font-size: 20px; }
+.hud-energy i.off { filter: grayscale(1); opacity: 0.35; }
+.hud-gear { min-height: 44px; width: 44px; padding: 0; font-size: 22px; border-radius: 50%; }
+@media (max-width: 520px) { .hud { gap: 5px; } .hud-pill { height: 38px; padding: 0 10px 0 8px; font-size: 17px; } .hud-energy { display: none; } }
+
+/* ---- coins flying to the wallet */
+.coin-fly {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  z-index: 40;
+  font-style: normal;
+  font-size: 30px;
+  pointer-events: none;
+  animation: coin-fly 0.8s cubic-bezier(0.4, -0.3, 0.6, 1) both;
+}
+@keyframes coin-fly {
+  from { transform: translate(-50%, -50%) scale(1.3); opacity: 0; }
+  20% { opacity: 1; }
+  to { transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(0.6); opacity: 0.9; }
+}
+
+/* ---- toasts */
+.toasts {
+  position: fixed;
+  top: calc(var(--safe-t) + 66px);
+  left: 50%;
+  z-index: 70;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+.toast {
+  max-width: 86vw;
+  padding: 10px 20px;
+  border-radius: 18px;
+  font-size: 19px;
+  font-weight: 700;
+  background: rgba(255, 255, 255, 0.82);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2);
+  animation: toast-in 0.3s ease;
+  transition: opacity 0.4s, transform 0.4s;
+}
+.toast.err { color: #fff; background: rgba(208, 88, 47, 0.85); }
+.toast.ok { color: #fff; background: rgba(31, 138, 76, 0.85); }
+.toast.badge { color: #5a3a00; background: linear-gradient(180deg, #ffe08a, #f4b73c); }
+.toast.out { opacity: 0; transform: translateY(-10px); }
+@keyframes toast-in { from { opacity: 0; transform: translateY(-12px); } }
+
+/* ---- ATM: the UI sits on the zoomed-in ATM's screen (no backdrop, glowing display) */
+.screen.atm { background: none; transition-delay: 0.45s; }
+.screen.atm .screen-card {
+  width: min(72vw, 560px);
+  max-height: 74vh;
+  border: 6px solid #1c2330;
+  border-radius: 18px;
+  background: linear-gradient(160deg, rgba(10, 70, 110, 0.92), rgba(4, 30, 56, 0.95));
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  box-shadow: 0 0 0 3px #3b4252, 0 0 40px rgba(110, 210, 255, 0.55), inset 0 0 30px rgba(120, 220, 255, 0.25);
+  color: #dff6ff;
+}
+.screen.atm .screen-head { background: rgba(0, 0, 0, 0.25); }
+.screen.atm .screen-head h2 { color: #8fe3ff; letter-spacing: 1px; }
+.screen.atm .screen-head .close { color: #dff6ff; background: rgba(255, 255, 255, 0.12); }
+.screen.atm .step-q, .screen.atm .hint { color: #dff6ff; }
+.screen.atm .amount-show, .screen.atm .bal-card b { color: #8fe3ff; }
+.screen.atm .pin-dots i { border-color: #8fe3ff; }
+.screen.atm .pin-dots i.on { background: #8fe3ff; }
+.screen.atm .bal-card { background: rgba(255, 255, 255, 0.1); color: #dff6ff; }
+.screen.atm .kbtn { color: #0a3a5c; background: #e6f6ff; }
+.screen.atm .kbtn.primary { color: #fff; background: linear-gradient(180deg, #2fb4f0, #0075b0); }
+.screen.atm .pin-keys { grid-template-columns: repeat(3, 64px); gap: 8px; }
+.screen.atm .pin-keys .key { min-height: 54px; font-size: 24px; }

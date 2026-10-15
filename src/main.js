@@ -16,6 +16,7 @@ import { loadSave, initAutosave } from './save.js';
 import { initAudio, setStepSpeed } from './audio.js';
 import jobs from '../data/jobs.json';
 import items from '../data/items.json';
+import start from '../data/economy.json';
 import { loadAnims, loadFbx } from './anims.js';
 import { buildInterior, interiorModelNames, interiorNpcNames } from './world/interior.js';
 import bankLayout from '../data/bank.json';
@@ -24,6 +25,11 @@ import { initDoors } from './world/doors.js';
 import { initPoiButton } from './ui/poi.js';
 import { initCamButton } from './ui/cambtn.js';
 import { initDialogs } from './ui/dialog.js';
+import { initHud } from './ui/hud.js';
+import { openBank } from './ui/bank.js';
+import { openAtm } from './ui/atm.js';
+import { openSettings, initSettings } from './ui/settings.js';
+import { on } from './bus.js';
 import { loadSignFont } from './world/signs.js';
 import brand from '../data/brand.json';
 import townData from '../data/town.json';
@@ -84,7 +90,7 @@ function frame(now) {
 }
 
 async function boot() {
-  game.econ = createEconomy({ jobs, items }, loadSave());
+  game.econ = createEconomy({ jobs, items, start }, loadSave());
   initAutosave(game.econ);
   applyI18n();
   applyBrand();
@@ -140,6 +146,13 @@ async function boot() {
   initPoiButton($('ui'));
   initCamButton($('ui'), game.rig);
   initDialogs({ host: document.body, player, rig: game.rig, input, econ: game.econ, worlds: game.worlds });
+
+  // P4 UI: HUD, bank (after the teller conversation), ATM, settings; full-screen screens pause the 3D
+  initSettings();
+  const hud = initHud({ host: $('ui'), econ: game.econ, items, onSettings: () => openSettings({ onDigits: () => hud.draw() }) });
+  on('dialog:end', ({ next }) => { if (next === 'open_account' || next === 'bank') openBank({ econ: game.econ, items, bankName: brand.bankName }); });
+  on('interact', ({ poiId }) => { if (poiId === 'atm_out') openAtm({ econ: game.econ, rig: game.rig, player, anchors: world.anchors }); });
+  on('ui:modal', ({ open, live }) => { setRenderPaused(open && !live); input.setEnabled(!open); });
 
   post = createPost(renderer, game.rig.camera, { outlined: player.outlined });
   const fx = createParticles({ pois: world.pois, bounds: world.bounds, budget: quality.particles });

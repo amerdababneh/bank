@@ -1,0 +1,5 @@
+{
+  "note": "Starting values for a new game (fixed pocket money, never random).",
+  "startWallet": 20,
+  "walletCap": 100
+}

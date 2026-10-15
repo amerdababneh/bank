@@ -201,7 +201,9 @@ html, body {
   width: min(46vw, 440px);
   padding: 14px 20px 12px;
   border-radius: 24px;
-  background: rgba(255, 255, 255, 0.96);
+  background: rgba(255, 255, 255, 0.72);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
   opacity: 0;
   transform: translateY(20px);

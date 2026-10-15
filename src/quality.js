@@ -9,7 +9,9 @@ const params = new URLSearchParams(location.search);
 export const quality = { tier: 'mid', ...TIERS.mid, dpr: 1 };
 
 export function detectTier(renderer) {
-  const forced = params.get('tier');
+  let saved = null;
+  try { saved = localStorage.getItem('mk_tier'); } catch { /* ignore */ }
+  const forced = params.get('tier') ?? saved; // ?tier= wins, then the settings screen choice
   if (TIERS[forced]) return forced;
   const gpu = renderer.backend.isWebGPUBackend === true;
   const mem = navigator.deviceMemory ?? 0; // Chrome only; 0 = unknown (iOS Safari)

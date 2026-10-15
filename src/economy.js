@@ -18,9 +18,11 @@ export function freshState() {
   };
 }
 
-// data: { jobs, items }; saved: a state from save.js (missing fields are filled from freshState)
+// data: { jobs, items, start? }; saved: a state from save.js (missing fields are filled from freshState)
 export function createEconomy(data, saved = null) {
-  const s = { ...freshState(), ...(saved ?? {}) };
+  // data.start (data/economy.json): pocket money and wallet cap for a brand-new game
+  const fresh = { ...freshState(), wallet: data.start?.startWallet ?? 0, walletCap: data.start?.walletCap ?? 100 };
+  const s = { ...fresh, ...(saved ?? {}) };
   const fail = (error) => ({ ok: false, error });
   const amount = (n) => Number.isInteger(n) && n > 0;
 

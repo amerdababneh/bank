@@ -35,6 +35,8 @@ export function bank(c, def, r) {
   b.box('lit', '#d6d9e0', ax, 0.9, zf + 0.92, 0.8, 0.12, 0.2);
   b.box('lit', primary, ax, 2.2, zf + 0.5, 1.4, 0.22, 1.0);
   c.sign(t('sign.atm'), 1.7, 0.5, ax, 2.7, zf + 0.15);
+  c.anchor('atm_screen', ax, 1.45, zf + 0.95); // ATM screen centre + a point in front (zoom shot)
+  c.anchor('atm_view', ax, 1.45, zf + 2);
   // flagpole + flag (separate mesh so FX can wave it)
   const fx = bw / 2 + 0.7, fz = zf + 2.2;
   b.cyl('lit', '#c9ccd2', fx, 0, fz, 0.07, 0.11, 11, 8);
