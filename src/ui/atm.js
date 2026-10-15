@@ -5,6 +5,7 @@ import { Vector3 } from 'three/webgpu';
 import { t, tf, fmt } from '../i18n.js';
 import { el, button, pinPad, amountPicker, toast, toastError } from './widgets.js';
 import { openScreen } from './screens.js';
+import { asset } from '../paths.js';
 import brand from '../../data/brand.json';
 import './atm.css';
 
@@ -30,7 +31,7 @@ export function openAtm({ econ, rig, player, anchors }) {
     const logo = el('img', 'atm-logo', head);
     logo.alt = '';
     logo.onerror = () => logo.remove();
-    logo.src = brand.logo;
+    logo.src = asset(brand.logo);
     el('b', 'atm-bank', head, brand.bankName);
     el('small', 'atm-help', head, t('atm.help'));
     const stage = el('div', 'atm-stage', display);

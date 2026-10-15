@@ -6,7 +6,7 @@
     "secondary": "#e5f1f7",
     "accent": "#df7a00"
   },
-  "logo": "/brand/logo.svg",
+  "logo": "brand/logo.svg",
   "flag": {
     "colors": [
       "#ffffff",

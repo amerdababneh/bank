@@ -14,6 +14,7 @@ import { createPlayer } from './player.js';
 import { createEconomy } from './economy.js';
 import { loadSave, initAutosave } from './save.js';
 import { initAudio } from './audio.js';
+import { asset } from './paths.js';
 import jobs from '../data/jobs.json';
 import items from '../data/items.json';
 import start from '../data/economy.json';
@@ -59,6 +60,15 @@ export function setActiveScene(scene, cameraPreset = 'town') {
 const $ = (id) => document.getElementById(id);
 const progress = (p) => { $('ld-bar').style.width = `${Math.round(p * 100)}%`; };
 
+// UI font from public/fonts, via a relative URL so the build also runs from a subfolder
+function loadFont() {
+  try {
+    const ff = new FontFace('Baloo Bhaijaan 2', `url(${asset('fonts/BalooBhaijaan2.woff2')})`, { weight: '400 800', display: 'swap' });
+    document.fonts.add(ff);
+    ff.load().catch(() => {}); // missing font: system fallback
+  } catch { /* old browser */ }
+}
+
 function applyBrand() {
   const root = document.documentElement.style;
   const { primary, secondary, accent } = brand.colors;
@@ -69,7 +79,7 @@ function applyBrand() {
   $('ld-short').textContent = brand.short;
   const logo = $('ld-logo');
   logo.onload = () => { logo.hidden = false; };
-  logo.src = brand.logo; // missing logo -> text fallback stays
+  logo.src = asset(brand.logo); // missing logo -> text fallback stays
 }
 
 function resize() {
@@ -92,6 +102,7 @@ function frame(now) {
 }
 
 async function boot() {
+  loadFont();
   game.econ = createEconomy({ jobs, items, start }, loadSave());
   initAutosave(game.econ);
   applyI18n();

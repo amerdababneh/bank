@@ -1,15 +1,10 @@
-@font-face {
-  font-family: 'Baloo Bhaijaan 2';
-  src: url('/fonts/BalooBhaijaan2.woff2') format('woff2');
-  font-weight: 400 800;
-  font-display: swap;
-}
+/* the font is registered from main.js (relative path, works from any folder) */
 
 :root {
   /* overwritten from data/brand.json at startup */
-  --c-primary: #7a1f3d;
-  --c-secondary: #f4ede1;
-  --c-accent: #d9a441;
+  --c-primary: #0075b0;
+  --c-secondary: #e5f1f7;
+  --c-accent: #df7a00;
   --font: 'Baloo Bhaijaan 2', 'Segoe UI', Tahoma, Arial, sans-serif;
   --safe-t: env(safe-area-inset-top, 0px);
   --safe-r: env(safe-area-inset-right, 0px);

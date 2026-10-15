@@ -4,6 +4,7 @@
 // so rigs whose bind poses differ (e.g. Tripo vs Mixamo, Y-up vs Z-up armature) still line up.
 import { AnimationClip, QuaternionKeyframeTrack, Quaternion } from 'three/webgpu';
 import { FBXLoader } from 'three/addons/loaders/FBXLoader.js';
+import { asset } from './paths.js';
 
 // key -> file name. 'talk' is loaded now and kept for later (NPC / teller chats).
 export const ANIMS = { talk: 'Talking' }; // idle/run come from the GLB's own clips
@@ -17,7 +18,7 @@ export async function loadAnims() {
   const out = {};
   await Promise.all(Object.entries(ANIMS).map(async ([key, file]) => {
     try {
-      const fbx = await loader.loadAsync(`/models/${encodeURIComponent(file)}.fbx`);
+      const fbx = await loader.loadAsync(asset(`models/${encodeURIComponent(file)}.fbx`));
       const clip = fbx.animations[0];
       if (!clip) return;
       clip.name = key;
@@ -69,7 +70,7 @@ export async function loadFbx(names) {
   const loader = new FBXLoader();
   const out = {};
   await Promise.all([...new Set(names)].map(async (n) => {
-    try { out[n] = await loader.loadAsync(`/models/${encodeURIComponent(n)}.fbx`); } catch { /* missing: NPC skipped */ }
+    try { out[n] = await loader.loadAsync(asset(`models/${encodeURIComponent(n)}.fbx`)); } catch { /* missing: NPC skipped */ }
   }));
   return out;
 }

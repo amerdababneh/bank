@@ -1,4 +1,5 @@
 import { on } from './bus.js';
+import { asset } from './paths.js';
 
 // Web Audio: background loop + one footstep sound played on each foot landing.
 // Browsers only allow sound after a user gesture, so the context starts on the first tap/key.
@@ -13,7 +14,7 @@ const gains = {}, sources = {};
 
 async function load(name) {
   try {
-    const res = await fetch(`/audio/${name}.mp3`);
+    const res = await fetch(asset(`audio/${name}.mp3`));
     if (!res.ok || !res.headers.get('content-type')?.includes('audio')) return null;
     return await ctx.decodeAudioData(await res.arrayBuffer());
   } catch {
@@ -88,7 +89,7 @@ export function playVoice(key) {
   voice = null;
   duck(false);
   if (!key || muted) return;
-  const v = new Audio(`/audio/voice/${key}.mp3`);
+  const v = new Audio(asset(`audio/voice/${key}.mp3`));
   voice = v;
   v.onplaying = () => duck(true);
   v.onended = () => { if (voice === v) duck(false); };

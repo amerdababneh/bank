@@ -1,3 +1,4 @@
+import { asset } from '../paths.js';
 // Canvas2D sign textures (RTL Arabic). One material per distinct sign, shared between meshes.
 import { CanvasTexture, SRGBColorSpace, Mesh, PlaneGeometry, MeshBasicMaterial } from 'three/webgpu';
 
@@ -61,7 +62,7 @@ function makeMaterial(text, aspect, { bg, fg, border, logo }) {
   if (logo) {
     const img = new Image();
     img.onload = () => draw(img);
-    img.src = logo; // missing logo -> keeps the text-only sign
+    img.src = asset(logo); // missing logo -> keeps the text-only sign
   }
   tex.anisotropy = 4;
   return new MeshBasicMaterial({ map: tex, transparent: true });

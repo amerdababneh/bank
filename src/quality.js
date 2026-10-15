@@ -5,6 +5,7 @@ const TIERS = {
   high: { maxDpr: 2, shadows: true, shadowMap: 2048, particles: 150, post: true, fpsCap: 0 },
 };
 const params = new URLSearchParams(location.search);
+const DEMO_TIER = 'high'; // set to null to pick the tier from the device again
 
 export const quality = { tier: 'mid', ...TIERS.mid, dpr: 1 };
 
@@ -13,6 +14,7 @@ export function detectTier(renderer) {
   try { saved = localStorage.getItem('mk_tier'); } catch { /* ignore */ }
   const forced = params.get('tier') ?? saved; // ?tier= wins, then the settings screen choice
   if (TIERS[forced]) return forced;
+  if (DEMO_TIER) return DEMO_TIER; // pitch demo: best look everywhere (dynamic resolution keeps fps up)
   const gpu = renderer.backend.isWebGPUBackend === true;
   const mem = navigator.deviceMemory ?? 0; // Chrome only; 0 = unknown (iOS Safari)
   const cores = navigator.hardwareConcurrency ?? 4;

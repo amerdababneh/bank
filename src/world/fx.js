@@ -41,13 +41,16 @@ export const FX = {
 };
 
 const KEY = 'mk_fx';
+// Demo look: the same effects on every device (chosen in the ?fx panel). null = pick by tier.
+const DEMO_DEFAULTS = ['water', 'sway', 'rim', 'clouds', 'ao', 'haze', 'dust', 'sparkles', 'wind', 'leaves', 'grade', 'bloom'];
 export const flags = {};
 const listeners = [];
 export const onFx = (fn) => listeners.push(fn);
 
 export function initFx(quality) {
   const t = quality.tier;
-  for (const k in FX) flags[k] = FX[k][1] === 'cheap' || (FX[k][1] === 'mid' && t !== 'low') || (FX[k][1] === 'high' && t === 'high');
+  for (const k in FX) flags[k] = DEMO_DEFAULTS ? DEMO_DEFAULTS.includes(k)
+    : FX[k][1] === 'cheap' || (FX[k][1] === 'mid' && t !== 'low') || (FX[k][1] === 'high' && t === 'high');
   if (new URLSearchParams(location.search).has('fx')) {
     try { Object.assign(flags, JSON.parse(localStorage.getItem(KEY)) ?? {}); } catch { /* ignore */ }
   }
