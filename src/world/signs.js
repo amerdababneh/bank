@@ -2,13 +2,13 @@ import { asset } from '../paths.js';
 // Canvas2D sign textures (RTL Arabic). One material per distinct sign, shared between meshes.
 import { CanvasTexture, SRGBColorSpace, Mesh, PlaneGeometry, MeshBasicMaterial } from 'three/webgpu';
 
-const FONT = '"Baloo Bhaijaan 2", "Segoe UI", Tahoma, Arial, sans-serif';
+const FONT = '"Almarai", "Segoe UI", Tahoma, Arial, sans-serif';
 const plane = new PlaneGeometry(1, 1);
 const cache = new Map();
 
 export async function loadSignFont() {
   try {
-    await document.fonts.load('700 48px "Baloo Bhaijaan 2"', 'ابت');
+    await document.fonts.load('700 48px "Almarai"', 'ابت'); // the weight the canvas signs draw with
   } catch { /* falls back to system fonts */ }
 }
 

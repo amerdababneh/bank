@@ -15,10 +15,10 @@ import { ao } from 'three/addons/tsl/display/GTAONode.js';
 import { ssr } from 'three/addons/tsl/display/SSRNode.js';
 import { fxU, hasKidShadow, setBloomMask, makeLit } from './light.js';
 
-const SAT = 1.12;                      // a little more colour
-const TINT = vec3(1.03, 1.0, 0.96);    // warm Gulf sun
-const VIG = 0.3;                       // corner darkening (0..1)
-const BLOOM = { strength: 0.45, radius: 0.5, threshold: 0.82 }; // only the brightest pixels glow
+const SAT = 1.15;                      // a little more colour
+const TINT = vec3(1.04, 1.04, 1.05);   // clean and bright (no warm "vintage" cast)
+const VIG = 0.1;                       // corner darkening (0..1), kept light
+const BLOOM = { strength: 0.3, radius: 0.45, threshold: 0.86 }; // only the brightest pixels glow
 
 // name -> [label, cost, kind]; kind: 'u' = shader uniform, 'obj' = scene objects, 'post' = pipeline
 export const FX = {
@@ -42,7 +42,7 @@ export const FX = {
 
 const KEY = 'mk_fx';
 // Demo look: the same effects on every device (chosen in the ?fx panel). null = pick by tier.
-const DEMO_DEFAULTS = ['water', 'sway', 'rim', 'clouds', 'ao', 'haze', 'dust', 'sparkles', 'wind', 'leaves', 'grade', 'bloom'];
+const DEMO_DEFAULTS = ['water', 'sway', 'rim', 'clouds', 'ao', 'haze', 'dust', 'sparkles', 'wind', 'leaves', 'grade', 'bloom', 'kidShadow'];
 export const flags = {};
 const listeners = [];
 export const onFx = (fn) => listeners.push(fn);

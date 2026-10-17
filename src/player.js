@@ -42,7 +42,7 @@ export function createPlayer({ input, rig, glbs, anims }) {
     input.hasTarget = false;
     group.position.set(x, world.groundAt?.(x, z) ?? 0, z);
     group.rotation.y = yaw;
-    rig.target.set(x, 0, z);
+    rig.target.set(x, group.position.y, z); // camera rises with the ground (hills)
   };
 
   // push the circle out of every box (two passes handle corners); the push is the slide
@@ -94,6 +94,12 @@ export function createPlayer({ input, rig, glbs, anims }) {
       pos.x += dx * want;
       pos.z += dz * want;
       resolve();
+      // stay on walkable ground (e.g. on the bridge deck, not the water around it): undo the blocked axis
+      if (world.walkableAt && !world.walkableAt(pos.x, pos.z)) {
+        if (world.walkableAt(px, pos.z)) pos.x = px;
+        else if (world.walkableAt(pos.x, pz)) pos.z = pz;
+        else pos.set(px, 0, pz);
+      }
       const moved = Math.hypot(pos.x - px, pos.z - pz);
       speed = moved / dt;
       if (input.hasTarget) { // give up on a tap target that is blocked
@@ -114,7 +120,7 @@ export function createPlayer({ input, rig, glbs, anims }) {
     p.speed = speed;
     group.rotation.y = yaw;
     avatar?.update(dt, speed);
-    rig.target.set(pos.x, 0, pos.z);
+    rig.target.set(pos.x, gy, pos.z);
 
     let near = null, best = Infinity;
     for (const o of world.pois) {

@@ -1,7 +1,8 @@
 // Doors between the town and the interiors: 300 ms CSS fade, swap the active scene behind it, place
 // the player. Entering: interior spawn. Leaving: just outside that building's town door, facing away.
 import { on } from '../bus.js';
-import { setSceneShadows, setIndoor, setOcclusionEnabled } from './light.js';
+import { setSceneShadows, setOcclusionEnabled } from './light.js';
+import { setIndoor } from './gltfmat.js';
 import { t } from '../i18n.js';
 
 const FADE_MS = 300;

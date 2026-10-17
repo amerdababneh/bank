@@ -2,7 +2,8 @@
 import { AnimationMixer, Group, Box3, Vector3 } from 'three/webgpu';
 import { emit } from './bus.js';
 import { clone } from 'three/addons/utils/SkeletonUtils.js';
-import { litFromGltf, PLAYER_LAYER } from './world/light.js';
+import { PLAYER_LAYER } from './world/light.js';
+import { litFromGltf } from './world/gltfmat.js';
 import { loadModel } from './world/models.js';
 import { retarget } from './anims.js';
 

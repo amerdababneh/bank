@@ -4,7 +4,8 @@ import { quality, detectTier, applyTier, frameGate, adaptResolution, createDebug
 import { createCameraRig } from './camera.js';
 import { createPost, initFx, onFx, postActive, createWind, uWindCenter, createFlags } from './world/fx.js';
 import { createParticles } from './world/particles.js';
-import { PLAYER_LAYER, setIndoor } from './world/light.js';
+import { PLAYER_LAYER } from './world/light.js';
+import { setIndoor } from './world/gltfmat.js';
 import { initFxPanel } from './ui/fxpanel.js';
 import { setupSky, setupSun } from './world/light.js';
 import { buildTown, computeBounds, modelNames } from './world/town.js';
@@ -20,11 +21,11 @@ import items from '../data/items.json';
 import start from '../data/economy.json';
 import { loadAnims, loadFbx } from './anims.js';
 import { buildInterior, interiorModelNames, interiorNpcNames } from './world/interior.js';
+import { createBoats, boatModelNames } from './world/boats.js';
 import bankLayout from '../data/bank.json';
 import marketLayout from '../data/market.json';
 import { initDoors } from './world/doors.js';
 import { initPoiButton } from './ui/poi.js';
-import { initCamButton } from './ui/cambtn.js';
 import { initDialogs } from './ui/dialog.js';
 import { initHud } from './ui/hud.js';
 import { openBank } from './ui/bank.js';
@@ -60,15 +61,6 @@ export function setActiveScene(scene, cameraPreset = 'town') {
 const $ = (id) => document.getElementById(id);
 const progress = (p) => { $('ld-bar').style.width = `${Math.round(p * 100)}%`; };
 
-// UI font from public/fonts, via a relative URL so the build also runs from a subfolder
-function loadFont() {
-  try {
-    const ff = new FontFace('Baloo Bhaijaan 2', `url(${asset('fonts/BalooBhaijaan2.woff2')})`, { weight: '400 800', display: 'swap' });
-    document.fonts.add(ff);
-    ff.load().catch(() => {}); // missing font: system fallback
-  } catch { /* old browser */ }
-}
-
 function applyBrand() {
   const root = document.documentElement.style;
   const { primary, secondary, accent } = brand.colors;
@@ -102,7 +94,6 @@ function frame(now) {
 }
 
 async function boot() {
-  loadFont();
   game.econ = createEconomy({ jobs, items, start }, loadSave());
   initAutosave(game.econ);
   applyI18n();
@@ -116,9 +107,10 @@ async function boot() {
   tickDebug = createDebug(renderer);
   progress(0.2);
 
-  const [, models, boy, girl, anims, npcFbx] = await Promise.all([
-    loadSignFont(), loadModels([...modelNames(tiles), ...Object.values(LAYOUTS).flatMap(interiorModelNames)], (p) => progress(0.2 + p * 0.3)), loadGltf('kid_boy'), loadGltf('kid_girl'), loadAnims(), loadFbx(Object.values(LAYOUTS).flatMap(interiorNpcNames)),
+  const [, models, boy, girl, anims, npcFbx, palmFbx] = await Promise.all([
+    loadSignFont(), loadModels([...modelNames(tiles), ...Object.values(LAYOUTS).flatMap(interiorModelNames), ...boatModelNames(townData.boats)], (p) => progress(0.2 + p * 0.3)), loadGltf('kid_boy'), loadGltf('kid_girl'), loadAnims(), loadFbx(Object.values(LAYOUTS).flatMap(interiorNpcNames)), loadFbx(tiles.palm?.fbx ? [tiles.palm.fbx] : []),
   ]);
+  if (tiles.palm?.fbx && palmFbx[tiles.palm.fbx]) models.palm = palmFbx[tiles.palm.fbx]; // town palms from the FBX
   progress(0.5);
 
   const scene = new Scene();
@@ -126,7 +118,11 @@ async function boot() {
   setupSun(scene, computeBounds(townData, tiles), quality); // must exist before materials are built
   const world = buildTown({ town: townData, tiles, brand, quality, models });
   scene.add(world.group);
-  const flags = createFlags(world.flags, brand.flag);
+  const boats = createBoats(townData.boats, models); // parked + sailing ships around the town
+  scene.add(boats.group);
+  updaters.push((dt, now) => boats.update(dt, now));
+  // flags: in front of buildings (tiles.json) + free-standing ones from town.json (corniche, bridge, island)
+  const flags = createFlags([...world.flags, ...(townData.flags ?? []).map(([x, z]) => ({ x, z, ry: 0 }))], brand.flag);
   scene.add(flags.group);
   world.colliders.push(...flags.colliders);
   game.scenes.town = scene;
@@ -156,12 +152,11 @@ async function boot() {
   updaters.push((dt) => { for (const w of Object.values(interiors)) if (w.scene === active) w.update(dt); });
   initDoors({ game, player, input, setActiveScene, interiors });
   initPoiButton($('ui'));
-  initCamButton($('ui'), game.rig);
   initDialogs({ host: document.body, player, rig: game.rig, input, econ: game.econ, worlds: game.worlds });
 
   // P4 UI: HUD, bank (after the teller conversation), ATM, settings; full-screen screens pause the 3D
   initSettings();
-  const hud = initHud({ host: $('ui'), econ: game.econ, items, onSettings: () => openSettings({ onDigits: () => hud.draw() }) });
+  const hud = initHud({ host: $('ui'), econ: game.econ, items, rig: game.rig, onSettings: () => openSettings({ onDigits: () => hud.draw() }) });
   on('dialog:end', ({ next }) => {
     if (next === 'open_account' || next === 'bank') openBank({ econ: game.econ, items, bankName: brand.bankName });
     else if (next?.startsWith('job:')) startJob({ econ: game.econ, jobs, jobId: next.slice(4) });

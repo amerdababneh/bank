@@ -2,26 +2,30 @@
 // Returns { group, colliders, pois, bounds, spawn, anchors, water, size }.
 import { Group, Box3, Vector3, PlaneGeometry } from 'three/webgpu';
 import { createBatch, makeInstanced } from './geo.js';
-import { makeLit, makeUnlit, makeBlobMaterial, litFromGltf, makeWater } from './light.js';
+import { makeLit, makeUnlit, makeBlobMaterial, makeWater } from './light.js';
+import { litFromGltf } from './gltfmat.js';
 import { makeSign } from './signs.js';
-import { palmGeometries, lampGeometry, dhow } from './props.js';
-import { road, corniche } from './grounds.js';
+import { palmGeometries, lampGeometry } from './props.js';
+import { road, corniche, bridge } from './grounds.js';
+import { streetDetails } from './details.js';
 import { souq, bakery, karak, store } from './buildings.js';
 import { bank } from './bankfront.js';
 import { skyline } from './skyline.js';
 import { t } from '../i18n.js';
-import { scatter } from './scatter.js';
+import { scatter, instanceModel } from './scatter.js';
+import { createTerrain } from './terrain.js';
 
-const BUILDERS = { road, corniche, dhow, souq, bakery, karak, store, bank, skyline };
+const BUILDERS = { road, corniche, bridge, souq, bakery, karak, store, bank, skyline };
 // facade direction -> rotation about Y; +z (south) faces the camera
 const FACES = { S: 0, W: -Math.PI / 2, E: Math.PI / 2, N: Math.PI };
 const AUTO_ORDER = ['S', 'W', 'E', 'N'];
 const APRON = 300;
 
 // Walkable area = bounding box of every non-void tile.
-export function computeBounds(town, tiles) {
+// non-void tiles (shadow map area); walkOnly: walkable tiles incl. ones over water (player area)
+export function computeBounds(town, tiles, walkOnly = false) {
   const T = town.tile, xs = [], zs = [];
-  town.map.forEach((row, z) => [...row].forEach((ch, x) => { if (!tiles.tiles[ch]?.void) { xs.push(x); zs.push(z); } }));
+  town.map.forEach((row, z) => [...row].forEach((ch, x) => { if (walkOnly ? tiles.tiles[ch]?.walk : !tiles.tiles[ch]?.void) { xs.push(x); zs.push(z); } }));
   return { minX: Math.min(...xs) * T, maxX: (Math.max(...xs) + 1) * T, minZ: Math.min(...zs) * T, maxZ: (Math.max(...zs) + 1) * T };
 }
 
@@ -29,6 +33,7 @@ export function computeBounds(town, tiles) {
 export const modelNames = (tiles) => (tiles.useModels === false ? [] : [
   ...Object.values(tiles.tiles).flatMap((d) => [d.model ?? [], d.skyModels ?? []].flat()),
   ...(tiles.scatter?.items ?? []).map((it) => it.model),
+  ...(tiles.details?.cars?.models ?? []),
 ]);
 
 export function buildTown({ town, tiles, brand, quality, models = {} }) {
@@ -90,7 +95,8 @@ export function buildTown({ town, tiles, brand, quality, models = {} }) {
   rect('water', water, -A, waterEnd, 0, MD + A, grounds.water.top);
   rect('water', water, MW, waterEnd, MW + A, MD + A, grounds.water.top);
   rect('lit', land, 0, MD, MW, MD + A, 0.06);
-  materials.water = makeWater(grounds.water.color, waterEnd);
+  const BW = (tiles.beach?.width ?? 0) + 1.2; // foam laps at the outer edge of the beach (details.js)
+  materials.water = makeWater(grounds.water.color, waterEnd - BW, -BW, MW + BW);
 
   // connected components of identical `span` letters become one building
   const seen = new Set();
@@ -215,25 +221,30 @@ export function buildTown({ town, tiles, brand, quality, models = {} }) {
     }
   }
 
+  const terrain = createTerrain({ town, tiles }); // gentle hills on "hill" tiles
+  if (terrain.mesh) group.add(terrain.mesh);
+  const heightAt = terrain.heightAt;
+  streetDetails({ b, c, rows, defs, T, grounds, models, pois, colliders, contacts, group, town, quality, heightAt, cfg: tiles.details, tilesCfg: tiles });
+
   const built = b.build(materials);
   group.add(built);
 
   // instanced palms / lamps; low tier gets fake contact-shadow quads instead of a shadow map
-  if (tiles.useModels !== false) scatter({ cfg: tiles.scatter, rows, defs, T, grounds, models, pois, spawn, group, colliders, contacts });
+  if (tiles.useModels !== false) scatter({ cfg: tiles.scatter, rows, defs, T, grounds, models, pois, spawn, group, colliders, contacts, heightAt });
 
   const litMat = materials.lit;
-  if (palms.length) {
+  if (palms.length && models.palm) instanceModel(models.palm, palms, tiles.palm?.h ?? 6.5, group, { sway: true, grad: tiles.palm?.h ?? 6.5, recolor: tiles.palm?.colors }); // FBX palm
+  else if (palms.length) {
     const g = palmGeometries(), swayMat = makeLit({ vertexColors: true, sway: true });
     group.add(makeInstanced(g.trunk, swayMat, palms), makeInstanced(g.crown, swayMat, palms));
   }
   if (lamps.length) group.add(makeInstanced(lampGeometry(), litMat, lamps));
   if (!quality.shadows && contacts.length) {
-    const quad = new PlaneGeometry(1, 1).rotateX(-Math.PI / 2);
-    const blobs = makeInstanced(quad, makeBlobMaterial(), contacts.map((p) => ({ ...p, y: 0.1, sy: 1 })), false);
-    group.add(blobs);
+    group.add(makeInstanced(new PlaneGeometry(1, 1).rotateX(-Math.PI / 2), makeBlobMaterial(), contacts.map((p) => ({ ...p, y: 0.1, sy: 1 })), false));
   }
 
-  const bounds = computeBounds(town, tiles);
-  const groundAt = (x, z) => grounds[def(Math.floor(x / T), Math.floor(z / T))?.ground]?.top ?? 0;
-  return { group, colliders, pois, bounds, spawn, groundAt, anchors, flags, water: built.getObjectByName('water'), size: { w: MW, d: MD } };
+  const bounds = computeBounds(town, tiles, true); // walkable area
+  const groundAt = (x, z) => (grounds[def(Math.floor(x / T), Math.floor(z / T))?.ground]?.top ?? 0) + heightAt(x, z);
+  const walkableAt = (x, z) => !!def(Math.floor(x / T), Math.floor(z / T))?.walk;
+  return { group, colliders, pois, bounds, spawn, groundAt, walkableAt, anchors, flags, water: built.getObjectByName('water'), size: { w: MW, d: MD } };
 }

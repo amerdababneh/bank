@@ -27,6 +27,13 @@
     "water": {
       "color": "#5ec4e4",
       "top": -0.8
+    },
+    "grass": {
+      "color": [
+        "#8bd36f",
+        "#84cc68"
+      ],
+      "top": 0.06
     }
   },
   "apron": {
@@ -36,7 +43,8 @@
   "scatter": {
     "on": [
       ".",
-      "P"
+      "P",
+      "H"
     ],
     "perTile": 2,
     "chance": 0.55,
@@ -55,7 +63,10 @@
       {
         "model": "buildings2/planter",
         "h": 1.1,
-        "r": 0.6
+        "r": 0.6,
+        "notOn": [
+          "H"
+        ]
       }
     ]
   },
@@ -80,7 +91,7 @@
       "void": true
     },
     "D": {
-      "build": "dhow",
+      "build": "none",
       "ground": "water",
       "water": true,
       "void": true
@@ -99,12 +110,12 @@
     },
     ".": {
       "build": "none",
-      "ground": "plaza",
+      "ground": "grass",
       "walk": true
     },
     "P": {
       "build": "none",
-      "ground": "plaza",
+      "ground": "grass",
       "walk": true,
       "palm": true
     },
@@ -134,12 +145,12 @@
       },
       "flags": [
         {
-          "side": -3.6,
-          "front": 1.2
+          "side": -7.2,
+          "front": 4.6
         },
         {
-          "side": 3.6,
-          "front": 1.2
+          "side": 7.2,
+          "front": 4.6
         }
       ]
     },
@@ -304,6 +315,60 @@
         "fg": "#ffffff",
         "border": "#ffffff"
       }
+    },
+    "b": {
+      "build": "bridge",
+      "ground": "water",
+      "water": true,
+      "void": true
+    },
+    "H": {
+      "build": "none",
+      "ground": "grass",
+      "walk": true,
+      "hill": true
+    }
+  },
+  "details": {
+    "note": "Street dressing (src/world/details.js): kerb lamps, parked cars on straight roads, grass tufts on lawn tiles.",
+    "lamps": true,
+    "cars": {
+      "models": [
+        "cars/suv",
+        "cars/suv-luxury",
+        "cars/taxi",
+        "cars/van"
+      ],
+      "chance": 0.35,
+      "length": 3.4
+    },
+    "grass": {
+      "perTile": 45,
+      "color": "#4fae3c"
+    }
+  },
+  "hills": {
+    "note": "Gentle hills on tiles with hill:true (src/world/terrain.js). height: peak metres; edge: metres to fade flat at the border.",
+    "height": 3.2,
+    "edge": 6,
+    "low": "#7cc864",
+    "high": "#a8e283"
+  },
+  "beach": {
+    "note": "Unreachable beach around the town outside the railing (src/world/details.js).",
+    "width": 3.5,
+    "sand": "#f2e2b6",
+    "wet": "#d8c38e",
+    "rock": "#9ba4ae",
+    "rocks": 40
+  },
+  "palm": {
+    "note": "Palm model (FBX in public/models) used for every palm; h = height in metres. Remove fbx to use the code-drawn palm. colors: brighter replacements for the model's brown (trunk) and green (leaves).",
+    "fbx": "palmera",
+    "h": 6.5,
+    "colors": {
+      "brown": "#c98a4e",
+      "green": "#5cc94a"
     }
   }
 }

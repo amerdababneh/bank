@@ -4,19 +4,21 @@ import {
   Vector3, Color, DirectionalLight, MeshBasicNodeMaterial, MeshBasicMaterial, CanvasTexture, SRGBColorSpace,
 } from 'three/webgpu';
 import {
-  uniform, normalWorld, normalWorldGeometry, normalView, positionWorld, positionLocal, positionViewDirection, vec2, vec3, vec4,
+  uniform, normalWorld, normalWorldGeometry, normalView, positionWorld, positionLocal, positionGeometry, positionViewDirection, vec2, vec3, vec4,
   mix, smoothstep, step, fract, dot, bool, sin, color, texture, float, shadow, output, cameraPosition, screenCoordinate,
-  time, instanceIndex, mx_noise_float, fog, rangeFogFactor, fwidth, mrt,
+  time, instanceIndex, mx_noise_float, fog, rangeFogFactor, fwidth, mrt, reflectVector,
 } from 'three/tsl';
 
 export const SUN_DIR = new Vector3(-0.6, 0.7, 0.35).normalize(); // points toward the sun
 const uSun = uniform(SUN_DIR);
-const SKY = vec3(0.54, 0.58, 0.66);
-const GROUND = vec3(0.46, 0.40, 0.33);
-const SUN = vec3(0.70, 0.62, 0.45);
+// brighter, cleaner daylight (cool sky fill + clear sun); shadows are tinted lavender, not grey
+const SKY = vec3(0.66, 0.72, 0.82);
+const GROUND = vec3(0.56, 0.53, 0.48);
+const SUN = vec3(0.64, 0.60, 0.50);
+const SHADOW_TINT = vec3(0.62, 0.64, 0.92);
 
-export const HAZE = '#cfe3ee';
-const ZENITH = '#7fb8e0';
+export const HAZE = '#dff3fb';
+const ZENITH = '#4fbcf0';
 const SUN_GLOW = '#ffe2b0';
 
 // effect switches (0/1), flipped live by the ?fx panel
@@ -74,27 +76,45 @@ const ditherNoise = fract(float(52.9829189).mul(fract(dot(screenCoordinate.xy, v
 const OCC_MASK = ditherNoise.greaterThanEqual(occFade.mul(0.88).mul(uOccOn)); // true = keep the fragment
 const KEEP = bool(true); // the shadow pass must not see the hole
 
+// Car glass: Kenney atlases paint windows dark blue-grey; those texels mirror the sky (horizon -> zenith)
+// with fresnel and a sun glint. Pure shader math, no extra render pass.
+function glassReflect(lit, albedo) {
+  const lum = albedo.dot(vec3(0.3, 0.59, 0.11));
+  const mask = smoothstep(0.02, 0.08, albedo.b.sub(albedo.r)).mul(smoothstep(0.4, 0.62, lum).oneMinus()); // bluish and darkish = glass
+  const r = reflectVector;
+  const sky = mix(color(HAZE), color(ZENITH), smoothstep(-0.05, 0.5, r.y)).add(r.dot(uSun).max(0).pow(80).mul(1.4));
+  const fres = positionViewDirection.dot(normalView).max(0).oneMinus().pow(2).mul(0.55).add(0.3);
+  return mix(lit, sky, mask.mul(fres));
+}
+
 // rim light: bright edge facing away from the camera (player only)
 const RIM = 0.18; // subtle: a white thobe blows out with more
 const rimTerm = positionViewDirection.dot(normalView).max(0).oneMinus().pow(4).mul(RIM).mul(fxU.rim);
 
 // palm sway: bend grows with height; phase per instance
-const swayPos = () => {
-  const bend = positionLocal.y.div(6).pow(2).mul(0.3).mul(fxU.sway);
+// h: object height (bend grows to the top), amp: tip sway in metres
+const swayPos = (h, amp) => {
+  // positionGeometry: the mesh's own height (positionLocal already includes the instance offset,
+  // so on a hill a grass tuft would bend as if it were metres tall)
+  const bend = positionGeometry.y.div(h).clamp(0, 1.2).pow(2).mul(amp).mul(fxU.sway);
   const s = sin(time.mul(1.3).add(float(instanceIndex).mul(1.7))).mul(bend);
   return positionLocal.add(vec3(s, 0, s.mul(0.6)));
 };
 
 // Opaque-by-default fake-sun material. Vertex colors / instance colors multiply on top automatically.
 // occlude: false for the player's own materials. rim: player. sway: instanced palms.
-export function makeLit({ color: c = 0xffffff, map = null, vertexColors = false, shadows = true, transparent = false, opacity = 1, side, occlude = true, rim = false, sway = false, allFaces = false, shadowNode = null } = {}) {
+export function makeLit({ color: c = 0xffffff, map = null, vertexColors = false, shadows = true, transparent = false, opacity = 1, side, occlude = true, rim = false, sway = false, allFaces = false, shadowNode = null, glassy = false, grad = 0 } = {}) {
   const m = new MeshBasicNodeMaterial({ vertexColors, transparent, opacity, ...(side !== undefined && { side }) });
   const tex = map ? texture(map) : null;
-  const base = tex ? tex.rgb.mul(color(c)) : color(c);
+  let base = tex ? tex.rgb.mul(color(c)) : color(c);
+  // grad: model height (m) for a bottom-dark -> top-light gradient with a warm tip (untextured plants)
+  if (grad) base = vec3(base).mul(mix(vec3(0.8, 0.82, 0.86), vec3(1.15, 1.13, 1.0), smoothstep(0, grad, positionGeometry.y)));
   let lit = fakeSun(base);
   if (rim) lit = lit.add(vec3(base).add(0.1).mul(rimTerm).mul(2)); // tinted by albedo: dark hair gets no white halo
+  if (glassy && tex) lit = glassReflect(lit, tex.rgb);
   m.colorNode = vec4(lit, tex ? tex.a : float(1));
-  if (sway) m.positionNode = swayPos();
+  // sway: true = palm (6 m), or a number = height of a small plant (e.g. grass tufts)
+  if (sway) m.positionNode = sway === true ? swayPos(6, 0.3) : swayPos(sway, sway * 0.18);
   // Shadow goes in outputNode, not colorNode: the shadow pass reuses colorNode.a, and sampling the
   // shadow map there reads the texture while it is being rendered (WebGPU validation error).
   // shadowNode: a scene's own map (bank interior); otherwise the town sun (+ kid shadow, off indoors)
@@ -104,7 +124,7 @@ export function makeLit({ color: c = 0xffffff, map = null, vertexColors = false,
     // only ground/roofs receive; walls stay clean (no acne). allFaces: the player receives everywhere
     if (!allFaces) sh = mix(1, sh, smoothstep(0.35, 0.75, normalWorld.y));
     if (!shadowNode) sh = mix(1, sh, uSceneShadow);
-    m.outputNode = vec4(output.rgb.mul(sh), output.a);
+    m.outputNode = vec4(output.rgb.mul(mix(SHADOW_TINT, vec3(1), sh)), output.a); // lavender shadows
   }
   if (allFaces) { // the player never blooms (white thobe + rim); mask only while bloom runs (see setBloomMask)
     noBloom.add(m);
@@ -120,7 +140,8 @@ export function makeLit({ color: c = 0xffffff, map = null, vertexColors = false,
 // Animated sea: slow colour waves, sun sparkles and a wobbling foam line at the shore (z = shoreZ).
 // Cartoon sea (flat, unlit): drifting light contour lines over two noise layers, tiny white flecks and a
 // wobbling foam line at the shore (z = shoreZ). With the water effect off it is a plain flat colour.
-export function makeWater(hex, shoreZ) {
+// land: the town rectangle x0..x1, z >= shoreZ; the foam band hugs its outline (north and side coasts)
+export function makeWater(hex, shoreZ, x0 = -1e5, x1 = 1e5) {
   const m = new MeshBasicNodeMaterial();
   const p = positionWorld.xz, base = color(new Color(hex));
   const n1 = mx_noise_float(vec3(p.mul(0.09), time.mul(0.12)));
@@ -132,41 +153,15 @@ export function makeWater(hex, shoreZ) {
   sea = mix(sea, light, lines.mul(0.75));
   const fleck = smoothstep(0.8, 0.86, mx_noise_float(vec3(p.mul(1.7), time.mul(0.9))));
   sea = mix(sea, vec3(1), fleck);
-  const wobble = sin(time.mul(1.6).add(p.x.mul(0.35))).mul(0.35);
-  const foam = smoothstep(0.2, 1.4, float(shoreZ).sub(p.y).add(wobble)).oneMinus().mul(step(p.y, shoreZ + 0.5));
+  const wobble = sin(time.mul(1.6).add(p.x.add(p.y).mul(0.35))).mul(0.35);
+  const dx = float(x0).sub(p.x).max(p.x.sub(x1)).max(0), dz = float(shoreZ).sub(p.y).max(0);
+  const foam = smoothstep(0.2, 1.4, dx.mul(dx).add(dz.mul(dz)).sqrt().add(wobble)).oneMinus(); // distance to the land
   sea = mix(sea, vec3(1), foam.mul(0.85));
   m.colorNode = vec4(mix(base, sea, fxU.water), 1);
   return m;
 }
 
 export const makeUnlit = ({ vertexColors = true, color: c = 0xffffff } = {}) => new MeshBasicMaterial({ vertexColors, color: c });
-
-// Replace every material of a loaded GLB with a fake-sun one (keeps color, map and vertex colors).
-export function litFromGltf(root, { occlude = true, rim = false, shadows = true, allFaces = false, shadowNode = null, indoorVariant = false } = {}) {
-  const cache = new Map();
-  root.traverse((o) => {
-    if (!o.isMesh) return;
-    const conv = (old) => {
-      if (!cache.has(old)) {
-        cache.set(old, makeLit({ color: old.color ?? 0xffffff, map: old.map ?? null, vertexColors: !!o.geometry.attributes.color, occlude, rim, shadows, allFaces, shadowNode }));
-      }
-      return cache.get(old);
-    };
-    const src = o.material;
-    o.material = Array.isArray(src) ? src.map(conv) : conv(src); // FBX: multi-material
-    if (indoorVariant) { // same look without the town sun shadow (that light is not in interior scenes)
-      const inConv = (old) => makeLit({ color: old.color ?? 0xffffff, map: old.map ?? null, vertexColors: !!o.geometry.attributes.color, occlude, rim, shadows: false, allFaces });
-      o.userData.matOut = o.material;
-      o.userData.matIn = Array.isArray(src) ? src.map(inConv) : inConv(src);
-    }
-  });
-  return root;
-}
-
-// Swap meshes made with indoorVariant between their town and interior materials.
-export function setIndoor(root, indoor) {
-  root.traverse((o) => { if (o.userData.matIn) o.material = indoor ? o.userData.matIn : o.userData.matOut; });
-}
 
 export function setupSky(scene) {
   const view = normalWorldGeometry; // background: direction of the view ray
@@ -175,7 +170,7 @@ export function setupSky(scene) {
   // fog tinted warm toward the sun when haze is on
   const dir = positionWorld.sub(cameraPosition).normalize();
   const fogCol = mix(color(HAZE), color(SUN_GLOW), dir.dot(uSun).max(0).pow(3).mul(0.7).mul(fxU.haze));
-  scene.fogNode = fog(fogCol, rangeFogFactor(80, 250));
+  scene.fogNode = fog(fogCol, rangeFogFactor(140, 480));
   scene.background = new Color(HAZE); // fallback clear color
 }
 
@@ -252,23 +247,5 @@ export function setupInteriorShadow(scene, quality, w, d) {
 
 export const refreshShadows = () => { if (sunLight) sunLight.shadow.needsUpdate = true; };
 
-let blobTex = null;
-function blobTexture() {
-  if (blobTex) return blobTex;
-  const c = document.createElement('canvas');
-  c.width = c.height = 64;
-  const g = c.getContext('2d');
-  const grad = g.createRadialGradient(32, 32, 2, 32, 32, 31);
-  grad.addColorStop(0, 'rgba(20,14,10,0.55)');
-  grad.addColorStop(0.55, 'rgba(20,14,10,0.28)');
-  grad.addColorStop(1, 'rgba(20,14,10,0)');
-  g.fillStyle = grad;
-  g.fillRect(0, 0, 64, 64);
-  blobTex = new CanvasTexture(c);
-  blobTex.colorSpace = SRGBColorSpace;
-  return blobTex;
-}
-
-// Soft dark quad material for character blob shadows and low-tier contact shadows.
-export const makeBlobMaterial = () => new MeshBasicMaterial({ map: blobTexture(), transparent: true, depthWrite: false, alphaTest: 0.02 });
-// alphaTest: the fully transparent corners are discarded, so post passes (MRT/AO/SSR) never see the quad
+// soft blob / contact shadows (plain canvas texture, no TSL)
+export { makeBlobMaterial } from './blob.js';

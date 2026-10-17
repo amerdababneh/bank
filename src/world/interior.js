@@ -3,7 +3,8 @@
 // .. D/2 (entrance, camera side). The camera looks in from +z, so there is no front wall mesh.
 import { Scene, Group, Mesh, BoxGeometry, PlaneGeometry, CylinderGeometry, Box3, Vector3, Color, AnimationMixer } from 'three/webgpu';
 import { clone as cloneSkinned } from 'three/addons/utils/SkeletonUtils.js';
-import { makeLit, litFromGltf, setupInteriorShadow, makeBlobMaterial } from './light.js';
+import { makeLit, setupInteriorShadow, makeBlobMaterial } from './light.js';
+import { litFromGltf } from './gltfmat.js';
 import { makeInstanced } from './geo.js';
 
 const WALL_H = 4.2, FLOOR_TOP = 0.12;

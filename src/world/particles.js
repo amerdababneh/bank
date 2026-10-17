@@ -4,24 +4,41 @@ import {
   CanvasTexture, SRGBColorSpace, Group,
 } from 'three/webgpu';
 import { makeLit } from './light.js';
+import { asset } from '../paths.js';
 
-const DUST_LIFE = 0.6, DUST_EVERY = 0.09;
+const DUST_LIFE = 0.6, DUST_EVERY = 0.09, CLOUDS = 14, CLOUD_R = 340; // ring radius: well behind the island skyline
 const tmp = new Object3D();
 
-function cloudTexture() {
+// Cloud art: public/textures/cloud.svg when present (drawn onto a canvas), otherwise generated soft puffs.
+// onAspect(h / w) lets the sprites match the art's proportions once the SVG has loaded.
+function cloudTexture(onAspect) {
   const c = document.createElement('canvas');
-  c.width = 128;
-  c.height = 64;
+  c.width = 256;
+  c.height = 128;
   const g = c.getContext('2d');
-  for (const [x, y, r] of [[40, 38, 22], [64, 30, 28], [90, 38, 22], [64, 44, 24]]) {
-    const grad = g.createRadialGradient(x, y, 2, x, y, r);
-    grad.addColorStop(0, 'rgba(255,255,255,0.95)');
+  const puffs = [[70, 78, 40], [112, 60, 52], [160, 66, 46], [196, 82, 34], [128, 86, 44], [92, 92, 30], [170, 94, 30]];
+  for (const [x, y, r] of puffs) {
+    const grad = g.createRadialGradient(x, y - r * 0.2, r * 0.1, x, y, r);
+    grad.addColorStop(0, 'rgba(255,255,255,0.75)');
+    grad.addColorStop(0.6, 'rgba(255,255,255,0.4)');
     grad.addColorStop(1, 'rgba(255,255,255,0)');
     g.fillStyle = grad;
-    g.fillRect(0, 0, 128, 64);
+    g.fillRect(0, 0, 256, 128);
   }
   const t = new CanvasTexture(c);
   t.colorSpace = SRGBColorSpace;
+  const img = new Image();
+  img.onload = () => {
+    const w = 512, h = Math.round((512 * img.naturalHeight) / img.naturalWidth) || 410;
+    const cv = document.createElement('canvas');
+    cv.width = w;
+    cv.height = h;
+    cv.getContext('2d').drawImage(img, 0, 0, w, h);
+    t.image = cv;
+    t.needsUpdate = true;
+    onAspect(h / w);
+  };
+  img.src = asset('textures/cloud.svg'); // missing file: keeps the generated cloud
   return t;
 }
 
@@ -43,13 +60,19 @@ export function createParticles({ pois, bounds, budget }) {
 
   // clouds: a handful of soft cards high over the town, drifting east
   const clouds = new Group();
-  const cMat = new SpriteMaterial({ map: cloudTexture(), transparent: true, depthWrite: false, fog: false });
-  const spanX = bounds.maxX - bounds.minX + 160;
-  for (let i = 0; i < 7; i++) {
+  const cMat = new SpriteMaterial({
+    map: cloudTexture((r) => { for (const c of clouds.children) c.scale.y = c.scale.x * r; }),
+    transparent: true, depthWrite: false, fog: false, opacity: 0.85,
+    color: 0xeef4fa, // a touch below pure white: soft, no bloom glow
+  });
+  // a ring of big, low clouds around the town: they hang just above the horizon where the low camera looks
+  const cx = (bounds.minX + bounds.maxX) / 2, cz = (bounds.minZ + bounds.maxZ) / 2;
+  for (let i = 0; i < CLOUDS; i++) {
     const s = new Sprite(cMat);
     const k = 0.7 + ((i * 37) % 10) / 15;
-    s.scale.set(34 * k, 15 * k, 1);
-    s.position.set(bounds.minX - 80 + (i / 7) * spanX, 38 + ((i * 13) % 5) * 4, bounds.minZ - 60 + ((i * 29) % 7) * 18);
+    s.scale.set(60 * k, 26 * k, 1);
+    const a = (i / CLOUDS) * Math.PI * 2 + ((i * 7) % 5) * 0.12, rad = CLOUD_R + ((i * 29) % 9) * 10;
+    s.position.set(cx + Math.sin(a) * rad, 30 + ((i * 13) % 5) * 7, cz - Math.cos(a) * rad);
     clouds.add(s);
   }
 
@@ -104,7 +127,7 @@ export function createParticles({ pois, bounds, budget }) {
       if (clouds.visible) {
         for (const c of clouds.children) {
           c.position.x += dt * 1.2;
-          if (c.position.x > bounds.maxX + 80) c.position.x = bounds.minX - 80;
+          if (c.position.x > cx + CLOUD_R + 120) c.position.x = cx - CLOUD_R - 120;
         }
       }
     },

@@ -20,10 +20,10 @@ export function bank(c, def, r) {
   // brand band + sign panel
   b.box('lit', primary, 0, 4.5, zf + 0.06, bw, 3.6, 0.2);
   b.box('lit', WHITE, 0, 4.2, zf + 0.04, bw, 0.3, 0.3);
-  c.sign(c.brand.bankName, 9.5, 1.9, 0, 5.4, zf + 0.2, { bg: secondary, fg: primary, border: c.brand.colors.accent, logo: c.brand.logo });
+  c.sign(c.brand.bankName, 9.5, 1.9, 0, 5.4, zf + 0.2, { bg: secondary, fg: primary, border: WHITE, logo: c.brand.logo });
   // canopy
   b.box('lit', primary, 0, 3.95, zf + 1.9, bw - 1, 0.28, 3.8);
-  b.box('lit', c.brand.colors.accent, 0, 3.85, zf + 3.78, bw - 1, 0.12, 0.14);
+  b.box('lit', WHITE, 0, 3.85, zf + 3.78, bw - 1, 0.12, 0.14); // canopy trim
   for (const s of [-1, 1]) b.cyl('lit', WHITE, s * (bw / 2 - 1.6), 0.06, zf + 3.4, 0.17, 0.17, 3.9, 8);
   // roof units
   b.box('lit', '#b9b5aa', -3, H + 0.4, zc, 2.4, 0.9, 1.6);
@@ -40,7 +40,7 @@ export function bank(c, def, r) {
   // flagpole + flag (separate mesh so FX can wave it)
   const fx = bw / 2 + 0.7, fz = zf + 2.2;
   b.cyl('lit', '#c9ccd2', fx, 0, fz, 0.07, 0.11, 11, 8);
-  b.sph('lit', c.brand.colors.accent, fx, 11.1, fz, 0.16);
+  b.sph('lit', WHITE, fx, 11.1, fz, 0.16);
   const flag = new Mesh(new PlaneGeometry(2.4, 1.5, 8, 4), makeLit({ color: primary, side: DoubleSide, shadows: false }));
   const w = b.world(fx + 1.25, fz);
   flag.position.set(w.x, 10.1, w.z);

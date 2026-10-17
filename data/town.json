@@ -1,15 +1,162 @@
 {
   "tile": 8,
+  "note": "Map rows north (sea, skyline island) to south. b = bridge to the island. H = gentle walkable hills. crossings: [x, z] road tiles with a zebra crossing. islands: far decoration {x, z, r, hill}. flags: [x, z] world positions of extra flag poles (corniche, bridge ends, island shore).",
   "map": [
     "SSSSSSSSSSSS",
-    "~~~~~~~~~~~~",
-    "~~~D~~~~~~~~",
+    "~~~~~~~~b~~~",
+    "~~~~~~~~b~~~",
+    "~~~~~~~~b~~~",
+    "~~~~~~~~b~~~",
+    "~~~~~~~~b~~~",
+    "~~~~~~~~b~~~",
+    "~~~~~~~~b~~~",
+    "~~~~~~~~b~~~",
+    "~~~~~~~~b~~~",
+    "~~~~~~~~b~~~",
+    "~~~~~~~~b~~~",
+    "~~~~~~~~b~~~",
+    "~~~~~~~~b~~~",
+    "~~~~~~~~b~~~",
+    "~~~~~~~~b~~~",
+    "~~~~~~~~b~~~",
+    "~~~~~~~~b~~~",
+    "~~~~~~~~b~~~",
+    "~~~~~~~~b~~~",
+    "~~~D~~~~b~~~",
     "CCCCCCCCCCCC",
     "P.RRRRRRRR.P",
     "hhR..BB..Rkk",
     "..RP.BB.PR..",
     "P.RRRRRRRR.P",
     "yss.tMMs.css",
-    "RRRRRRRRRRRR"
-  ]
+    "RRRRRRRRRRRR",
+    "HHHHHHHHHHHH",
+    "HHHHHHHHHHHH",
+    "HHHHHHHHHHHH"
+  ],
+  "crossings": [
+    [6, 25],
+    [2, 24],
+    [9, 24]
+  ],
+  "islands": [
+    {
+      "x": -95,
+      "z": -80,
+      "r": 32,
+      "hill": true
+    },
+    {
+      "x": 195,
+      "z": -70,
+      "r": 26
+    },
+    {
+      "x": 70,
+      "z": -130,
+      "r": 42,
+      "hill": true
+    }
+  ],
+  "flags": [
+    [20, 169.3],
+    [52, 169.3],
+    [84, 169.3],
+    [61, 169.3],
+    [75, 169.3],
+    [61, 7.6],
+    [75, 7.6],
+    [24, 7.6],
+    [44, 7.6]
+  ],
+  "boats": {
+    "note": "parked: {model, x, z, ry (deg), len (m), flip}. sailing: ellipse loop {model, cx, cz, rx, rz, speed (rad/s), dir 1|-1, start, len}. Keep loops clear of the bridge (x 64-72).",
+    "parked": [
+      {
+        "model": "ships/ship-large",
+        "x": -34,
+        "z": 205,
+        "ry": 0,
+        "len": 26
+      },
+      {
+        "model": "ships/boat-fishing-small",
+        "x": 10,
+        "z": 157,
+        "ry": 80,
+        "len": 6
+      },
+      {
+        "model": "ships/boat-speed-a",
+        "x": 44,
+        "z": 158,
+        "ry": 100,
+        "len": 5
+      },
+      {
+        "model": "ships/boat-tug-c",
+        "x": 88,
+        "z": 154,
+        "ry": 75,
+        "len": 9
+      },
+      {
+        "model": "ships/boat-fishing-small",
+        "x": -10,
+        "z": 190,
+        "ry": 10,
+        "len": 6
+      },
+      {
+        "model": "ships/boat-speed-a",
+        "x": 106,
+        "z": 205,
+        "ry": -15,
+        "len": 5
+      }
+    ],
+    "sailing": [
+      {
+        "model": "ships/ship-cargo-a",
+        "cx": -70,
+        "cz": 70,
+        "rx": 70,
+        "rz": 45,
+        "speed": 0.025,
+        "dir": 1,
+        "len": 42
+      },
+      {
+        "model": "ships/boat-speed-a",
+        "cx": 135,
+        "cz": 120,
+        "rx": 32,
+        "rz": 40,
+        "speed": 0.14,
+        "dir": -1,
+        "len": 5
+      },
+      {
+        "model": "ships/boat-fishing-small",
+        "cx": -28,
+        "cz": 135,
+        "rx": 16,
+        "rz": 24,
+        "speed": 0.06,
+        "dir": 1,
+        "len": 6
+      },
+      {
+        "model": "ships/ship-large",
+        "cx": 68,
+        "cz": -25,
+        "rx": 170,
+        "rz": 12,
+        "speed": 0.012,
+        "dir": 1,
+        "start": 1,
+        "len": 30
+      }
+    ]
+  }
 }

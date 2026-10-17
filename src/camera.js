@@ -5,8 +5,8 @@ import { PerspectiveCamera, Vector3 } from 'three/webgpu';
 const RAD = Math.PI / 180;
 const PRESETS = {
   // low third-person view behind the kid; `look` = height of the look-at point above the feet
-  town: { dist: 5.1, pitch: 20 * RAD, fov: 46, look: 1.1 },
-  interior: { dist: 4.7, pitch: 24 * RAD, fov: 48, look: 1.1 },
+  town: { dist: 6.2, pitch: 11 * RAD, fov: 40, look: 1.3 }, // Coastal World framing: kid ~1/4 of the height, feet low, horizon high
+  interior: { dist: 5.2, pitch: 16 * RAD, fov: 44, look: 1.2 },
   // high 3/4 view
   townTop: { dist: 15, pitch: 50 * RAD, fov: 40, look: 0.6 },
   interiorTop: { dist: 11, pitch: 55 * RAD, fov: 44, look: 0.6 },
@@ -17,7 +17,7 @@ const PORTRAIT_MAX = 1.3; // ...but only up to this much, so the kid stays big o
 const MOBILE_DIST = navigator.maxTouchPoints > 0 ? 0.88 : 1; // small touch screens: camera closer
 
 export function createCameraRig() {
-  const camera = new PerspectiveCamera(PRESETS.town.fov, 1, 0.1, 450);
+  const camera = new PerspectiveCamera(PRESETS.town.fov, 1, 0.1, 700);
   const target = new Vector3();   // set by the follow target (player)
   const focus = new Vector3();    // smoothed look-at point
   const cur = { dist: PRESETS.town.dist * MOBILE_DIST, pitch: PRESETS.town.pitch };

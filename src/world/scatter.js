@@ -3,12 +3,12 @@
 // that already hold a palm.
 import { Box3, Vector3 } from 'three/webgpu';
 import { makeInstanced } from './geo.js';
-import { litFromGltf } from './light.js';
+import { litFromGltf } from './gltfmat.js';
 
 const _box = new Box3(), _size = new Vector3();
 
-// cfg: { on: ["."], perTile, chance, clear, items: [{ model, h, r }] }
-export function scatter({ cfg, rows, defs, T, grounds, models, pois, spawn, group, colliders, contacts }) {
+// cfg: { on: ["."], perTile, chance, clear, items: [{ model, h, r, notOn? }] }
+export function scatter({ cfg, rows, defs, T, grounds, models, pois, spawn, group, colliders, contacts, heightAt = () => 0 }) {
   if (!cfg) return;
   const items = cfg.items.filter((it) => models[it.model]);
   if (!items.length) return;
@@ -25,8 +25,11 @@ export function scatter({ cfg, rows, defs, T, grounds, models, pois, spawn, grou
       const px = (x + 0.15 + rnd(x + k, z) * 0.7) * T, pz = (z + 0.15 + rnd(z + k, x + 5) * 0.7) * T;
       if (defs[ch].palm && Math.hypot(px - (x + 0.5) * T, pz - (z + 0.5) * T) < 2.2) continue;
       if (blocked.some((b) => Math.hypot(b.x - px, b.z - pz) < clear)) continue;
-      const i = Math.floor(rnd(px, pz) * items.length), it = items[i];
-      placed[i].push({ x: px, y: top, z: pz, ry: rnd(pz, px) * 6.28, s: 0.85 + rnd(px + 1, pz) * 0.3 });
+      // notOn: tile letters an item must not appear on (e.g. no planters on the hills)
+      const ok = items.filter((x) => !x.notOn?.includes(ch));
+      if (!ok.length) continue;
+      const it = ok[Math.floor(rnd(px, pz) * ok.length)], i = items.indexOf(it);
+      placed[i].push({ x: px, y: top + heightAt(px, pz), z: pz, ry: rnd(pz, px) * 6.28, s: 0.85 + rnd(px + 1, pz) * 0.3 });
       blocked.push({ x: px, z: pz });
       const r = it.r ?? 0.4;
       colliders.push(new Box3(new Vector3(px - r, 0, pz - r), new Vector3(px + r, 4, pz + r)));
@@ -34,17 +37,19 @@ export function scatter({ cfg, rows, defs, T, grounds, models, pois, spawn, grou
     }
   }));
 
-  items.forEach((it, i) => {
-    if (!placed[i].length) return;
-    // normalise the model to `h` metres tall, then bake each mesh part into its own instanced batch
-    const src = litFromGltf(models[it.model].clone(true));
-    src.updateMatrixWorld(true);
-    const k = (it.h ?? 2) / Math.max(0.01, _box.setFromObject(src).getSize(_size).y);
-    const minY = _box.min.y;
-    src.traverse((m) => {
-      if (!m.isMesh) return;
-      const geo = m.geometry.clone().applyMatrix4(m.matrixWorld).translate(0, -minY, 0).scale(k, k, k);
-      group.add(makeInstanced(geo, m.material, placed[i]));
-    });
+  items.forEach((it, i) => { if (placed[i].length) instanceModel(models[it.model], placed[i], it.h ?? 2, group); });
+}
+
+// Normalise a model to h metres tall and bake each mesh part into its own InstancedMesh at the
+// given transforms. opts.sway: wind sway (palms). Used for trees/planters and the FBX palm.
+export function instanceModel(model, transforms, h, group, opts = {}) {
+  const src = litFromGltf(model.clone(true), opts);
+  src.updateMatrixWorld(true);
+  const k = h / Math.max(0.01, _box.setFromObject(src).getSize(_size).y);
+  const minY = _box.min.y;
+  src.traverse((m) => {
+    if (!m.isMesh) return;
+    const geo = m.geometry.clone().applyMatrix4(m.matrixWorld).translate(0, -minY, 0).scale(k, k, k);
+    group.add(makeInstanced(geo, m.material, transforms));
   });
 }
