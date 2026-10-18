@@ -5,7 +5,6 @@ import { createCameraRig } from './camera.js';
 import { createPost, initFx, onFx, postActive, createWind, uWindCenter, createFlags } from './world/fx.js';
 import { createParticles } from './world/particles.js';
 import { PLAYER_LAYER } from './world/light.js';
-import { setIndoor } from './world/gltfmat.js';
 import { initFxPanel } from './ui/fxpanel.js';
 import { setupSky, setupSun } from './world/light.js';
 import { buildTown, computeBounds, modelNames } from './world/town.js';
@@ -22,6 +21,7 @@ import start from '../data/economy.json';
 import { loadAnims, loadFbx } from './anims.js';
 import { buildInterior, interiorModelNames, interiorNpcNames } from './world/interior.js';
 import { createBoats, boatModelNames } from './world/boats.js';
+import { createLandmarks } from './world/landmark.js';
 import bankLayout from '../data/bank.json';
 import marketLayout from '../data/market.json';
 import { initDoors } from './world/doors.js';
@@ -93,6 +93,16 @@ function frame(now) {
   adaptResolution(game.renderer, dt);
 }
 
+// Loading timings in the console (where the wait goes on slow devices): [boot] step: ms
+const T0 = performance.now();
+let tPrev = T0;
+function stage(name, p) {
+  const now = performance.now();
+  console.info(`[boot] ${name}: ${Math.round(now - tPrev)} ms (total ${Math.round(now - T0)} ms)`);
+  tPrev = now;
+  if (p !== undefined) progress(p);
+}
+
 async function boot() {
   game.econ = createEconomy({ jobs, items, start }, loadSave());
   initAutosave(game.econ);
@@ -111,13 +121,14 @@ async function boot() {
     loadSignFont(), loadModels([...modelNames(tiles), ...Object.values(LAYOUTS).flatMap(interiorModelNames), ...boatModelNames(townData.boats)], (p) => progress(0.2 + p * 0.3)), loadGltf('kid_boy'), loadGltf('kid_girl'), loadAnims(), loadFbx(Object.values(LAYOUTS).flatMap(interiorNpcNames)), loadFbx(tiles.palm?.fbx ? [tiles.palm.fbx] : []),
   ]);
   if (tiles.palm?.fbx && palmFbx[tiles.palm.fbx]) models.palm = palmFbx[tiles.palm.fbx]; // town palms from the FBX
-  progress(0.5);
+  stage('downloads (models, FBX, font)', 0.5);
 
   const scene = new Scene();
   setupSky(scene);
   setupSun(scene, computeBounds(townData, tiles), quality); // must exist before materials are built
   const world = buildTown({ town: townData, tiles, brand, quality, models });
   scene.add(world.group);
+  scene.add(createLandmarks(townData.landmarks)); // QIB HQ + Doha Tower on the island
   const boats = createBoats(townData.boats, models); // parked + sailing ships around the town
   scene.add(boats.group);
   updaters.push((dt, now) => boats.update(dt, now));
@@ -134,7 +145,7 @@ async function boot() {
     game.scenes[name] = interiors[name].scene;
     game.worlds[name] = interiors[name];
   }
-  progress(0.7);
+  stage('build town + interiors', 0.7);
 
   game.rig = createCameraRig();
   game.rig.camera.layers.enable(PLAYER_LAYER);
@@ -183,18 +194,9 @@ async function boot() {
 
   setActiveScene(scene, 'town');
   await renderer.compileAsync(scene, game.rig.camera);
-  // Warm up every interior behind the loader: the kid's indoor materials, NPCs, the post pipeline and
-  // the one-time interior shadow bake, so the first door is quick (no long fade on first entry).
-  setIndoor(player.group, true);
-  for (const w of Object.values(interiors)) {
-    w.scene.add(player.group);
-    await renderer.compileAsync(w.scene, game.rig.camera);
-    if (postActive()) post.render(w.scene); else renderer.render(w.scene, game.rig.camera);
-  }
-  setIndoor(player.group, false);
-  scene.add(player.group);
+  stage('compile town shaders', 0.8);
   if (postActive()) post.render(scene);
-  progress(1);
+  stage('first town frame', 1);
 
   window.addEventListener('resize', resize);
   window.addEventListener('orientationchange', () => setTimeout(resize, 200));
@@ -204,6 +206,13 @@ async function boot() {
   });
   last = performance.now();
   renderer.setAnimationLoop(frame);
+
+  // Interiors compile in the background once the town is playable (not behind the loader); their
+  // shadow bake + the kid's indoor look finish behind the door's loading card on first entry.
+  setTimeout(async () => {
+    for (const w of Object.values(interiors)) await renderer.compileAsync(w.scene, game.rig.camera);
+    stage('background: interiors compiled');
+  }, 1200);
 
   const loader = $('loader');
   loader.classList.add('done');

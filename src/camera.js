@@ -17,7 +17,7 @@ const PORTRAIT_MAX = 1.3; // ...but only up to this much, so the kid stays big o
 const MOBILE_DIST = navigator.maxTouchPoints > 0 ? 0.88 : 1; // small touch screens: camera closer
 
 export function createCameraRig() {
-  const camera = new PerspectiveCamera(PRESETS.town.fov, 1, 0.1, 700);
+  const camera = new PerspectiveCamera(PRESETS.town.fov, 1, 0.1, 1000);
   const target = new Vector3();   // set by the follow target (player)
   const focus = new Vector3();    // smoothed look-at point
   const cur = { dist: PRESETS.town.dist * MOBILE_DIST, pitch: PRESETS.town.pitch };

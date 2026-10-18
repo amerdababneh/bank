@@ -11,7 +11,7 @@
 - White-label: the brand (name, colours, logo), the content (prices, jobs, items, stores, quests) and the town map live in data/*.json, never in code.
 
 ## Tech
-- `three/webgpu` WebGPURenderer (auto WebGL2 fallback, which is the baseline target). TSL for custom shaders; keep TSL inside src/world/light.js and fx.js.
+- `three/webgpu` WebGPURenderer (auto WebGL2 fallback, which is the baseline target). TSL for custom shaders; keep TSL inside src/world/light.js, fx.js and water.js (sea + tower glass).
 - Lighting: TSL `fakeSun()` on all materials, no realtime lighting. Mid/high: one DirectionalLight shadow map rendered ONCE after load. Low: no shadow map, fake contact-shadow quads instead. Characters get blob shadows.
 - Tiers in src/quality.js (low/mid/high), and every effect checks the tier. Particles 20/60/150. Post: none on low, grade+vignette on mid/high. 30fps cap on low.
 - No per-frame allocations; prefer GPU (TSL `time`) animation. Pause rendering while full-screen UI or DOM jobs are open.

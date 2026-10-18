@@ -6,7 +6,7 @@ import {
 import { makeLit } from './light.js';
 import { asset } from '../paths.js';
 
-const DUST_LIFE = 0.6, DUST_EVERY = 0.09, CLOUDS = 14, CLOUD_R = 340; // ring radius: well behind the island skyline
+const DUST_LIFE = 0.6, DUST_EVERY = 0.09, CLOUDS = 14, CLOUD_R = 560; // ring radius: well behind the island skyline
 const tmp = new Object3D();
 
 // Cloud art: public/textures/cloud.svg when present (drawn onto a canvas), otherwise generated soft puffs.

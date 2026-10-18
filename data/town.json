@@ -1,8 +1,38 @@
 {
   "tile": 8,
-  "note": "Map rows north (sea, skyline island) to south. b = bridge to the island. H = gentle walkable hills. crossings: [x, z] road tiles with a zebra crossing. islands: far decoration {x, z, r, hill}. flags: [x, z] world positions of extra flag poles (corniche, bridge ends, island shore).",
+  "note": "Map rows north (sea, skyline island) to south. b = bridge to the island. H = gentle walkable hills. crossings: [x, z] road tiles with a zebra crossing. islands: far decoration {x, z, r, hill}. flags: [x, z] world positions of extra flag poles (corniche, bridge ends, island shore). landmarks: island towers {type: qib|doha, x, z, ry, h, clear}.",
   "map": [
     "SSSSSSSSSSSS",
+    "~~~~~~~~b~~~",
+    "~~~~~~~~b~~~",
+    "~~~~~~~~b~~~",
+    "~~~~~~~~b~~~",
+    "~~~~~~~~b~~~",
+    "~~~~~~~~b~~~",
+    "~~~~~~~~b~~~",
+    "~~~~~~~~b~~~",
+    "~~~~~~~~b~~~",
+    "~~~~~~~~b~~~",
+    "~~~~~~~~b~~~",
+    "~~~~~~~~b~~~",
+    "~~~~~~~~b~~~",
+    "~~~~~~~~b~~~",
+    "~~~~~~~~b~~~",
+    "~~~~~~~~b~~~",
+    "~~~~~~~~b~~~",
+    "~~~~~~~~b~~~",
+    "~~~~~~~~b~~~",
+    "~~~~~~~~b~~~",
+    "~~~~~~~~b~~~",
+    "~~~~~~~~b~~~",
+    "~~~~~~~~b~~~",
+    "~~~~~~~~b~~~",
+    "~~~~~~~~b~~~",
+    "~~~~~~~~b~~~",
+    "~~~~~~~~b~~~",
+    "~~~~~~~~b~~~",
+    "~~~~~~~~b~~~",
+    "~~~~~~~~b~~~",
     "~~~~~~~~b~~~",
     "~~~~~~~~b~~~",
     "~~~~~~~~b~~~",
@@ -35,9 +65,9 @@
     "HHHHHHHHHHHH"
   ],
   "crossings": [
-    [6, 25],
-    [2, 24],
-    [9, 24]
+    [6, 55],
+    [2, 54],
+    [9, 54]
   ],
   "islands": [
     {
@@ -59,11 +89,11 @@
     }
   ],
   "flags": [
-    [20, 169.3],
-    [52, 169.3],
-    [84, 169.3],
-    [61, 169.3],
-    [75, 169.3],
+    [20, 409.3],
+    [52, 409.3],
+    [84, 409.3],
+    [61, 409.3],
+    [75, 409.3],
     [61, 7.6],
     [75, 7.6],
     [24, 7.6],
@@ -75,42 +105,42 @@
       {
         "model": "ships/ship-large",
         "x": -34,
-        "z": 205,
+        "z": 445,
         "ry": 0,
         "len": 26
       },
       {
         "model": "ships/boat-fishing-small",
         "x": 10,
-        "z": 157,
+        "z": 397,
         "ry": 80,
         "len": 6
       },
       {
         "model": "ships/boat-speed-a",
         "x": 44,
-        "z": 158,
+        "z": 398,
         "ry": 100,
         "len": 5
       },
       {
         "model": "ships/boat-tug-c",
         "x": 88,
-        "z": 154,
+        "z": 394,
         "ry": 75,
         "len": 9
       },
       {
         "model": "ships/boat-fishing-small",
         "x": -10,
-        "z": 190,
+        "z": 430,
         "ry": 10,
         "len": 6
       },
       {
         "model": "ships/boat-speed-a",
         "x": 106,
-        "z": 205,
+        "z": 445,
         "ry": -15,
         "len": 5
       }
@@ -119,7 +149,7 @@
       {
         "model": "ships/ship-cargo-a",
         "cx": -70,
-        "cz": 70,
+        "cz": 310,
         "rx": 70,
         "rz": 45,
         "speed": 0.025,
@@ -129,7 +159,7 @@
       {
         "model": "ships/boat-speed-a",
         "cx": 135,
-        "cz": 120,
+        "cz": 360,
         "rx": 32,
         "rz": 40,
         "speed": 0.14,
@@ -139,7 +169,7 @@
       {
         "model": "ships/boat-fishing-small",
         "cx": -28,
-        "cz": 135,
+        "cz": 375,
         "rx": 16,
         "rz": 24,
         "speed": 0.06,
@@ -158,5 +188,22 @@
         "len": 30
       }
     ]
-  }
+  },
+  "landmarks": [
+    {
+      "type": "qib",
+      "x": 34,
+      "z": 4,
+      "ry": 0,
+      "h": 62,
+      "clear": 16
+    },
+    {
+      "type": "doha",
+      "x": 54,
+      "z": 4,
+      "h": 60,
+      "clear": 10
+    }
+  ]
 }

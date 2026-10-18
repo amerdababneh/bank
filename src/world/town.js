@@ -2,7 +2,8 @@
 // Returns { group, colliders, pois, bounds, spawn, anchors, water, size }.
 import { Group, Box3, Vector3, PlaneGeometry } from 'three/webgpu';
 import { createBatch, makeInstanced } from './geo.js';
-import { makeLit, makeUnlit, makeBlobMaterial, makeWater } from './light.js';
+import { makeLit, makeUnlit, makeBlobMaterial } from './light.js';
+import { makeWater } from './water.js';
 import { litFromGltf } from './gltfmat.js';
 import { makeSign } from './signs.js';
 import { palmGeometries, lampGeometry } from './props.js';
@@ -207,6 +208,8 @@ export function buildTown({ town, tiles, brand, quality, models = {} }) {
   function placeSkyline(list, r) {
     const n = Math.max(3, Math.round(r.w / 14));
     for (let i = 0; i < n; i++) {
+      const x = r.cx - r.w / 2 + ((i + 0.5) / n) * r.w + (hash(i, 9) - 0.5) * 4;
+      if ((town.landmarks ?? []).some((l) => Math.abs(x - l.x) < (l.clear ?? 14))) continue; // landmark tower spots
       const src = list[Math.floor(hash(i, r.cz) * list.length)];
       const m = litFromGltf(src.clone(true));
       const box = new Box3().setFromObject(m), size = box.getSize(new Vector3()), ctr = box.getCenter(new Vector3());
@@ -214,16 +217,14 @@ export function buildTown({ town, tiles, brand, quality, models = {} }) {
       m.scale.setScalar(s);
       m.position.set(-ctr.x * s, -box.min.y * s, -ctr.z * s);
       const holder = new Group();
-      holder.position.set(r.cx - r.w / 2 + ((i + 0.5) / n) * r.w + (hash(i, 9) - 0.5) * 4, 0, r.cz + 3 + (hash(i, 5) - 0.5) * 3);
+      holder.position.set(x, 0, r.cz + 3 + (hash(i, 5) - 0.5) * 3);
       holder.rotation.y = ((tiles.modelYaw ?? 0) * Math.PI) / 180;
-      holder.add(m);
-      group.add(holder);
+      group.add(holder.add(m));
     }
   }
 
-  const terrain = createTerrain({ town, tiles }); // gentle hills on "hill" tiles
+  const terrain = createTerrain({ town, tiles }), { heightAt } = terrain; // gentle hills on "hill" tiles
   if (terrain.mesh) group.add(terrain.mesh);
-  const heightAt = terrain.heightAt;
   streetDetails({ b, c, rows, defs, T, grounds, models, pois, colliders, contacts, group, town, quality, heightAt, cfg: tiles.details, tilesCfg: tiles });
 
   const built = b.build(materials);
@@ -232,13 +233,12 @@ export function buildTown({ town, tiles, brand, quality, models = {} }) {
   // instanced palms / lamps; low tier gets fake contact-shadow quads instead of a shadow map
   if (tiles.useModels !== false) scatter({ cfg: tiles.scatter, rows, defs, T, grounds, models, pois, spawn, group, colliders, contacts, heightAt });
 
-  const litMat = materials.lit;
   if (palms.length && models.palm) instanceModel(models.palm, palms, tiles.palm?.h ?? 6.5, group, { sway: true, grad: tiles.palm?.h ?? 6.5, recolor: tiles.palm?.colors }); // FBX palm
   else if (palms.length) {
     const g = palmGeometries(), swayMat = makeLit({ vertexColors: true, sway: true });
     group.add(makeInstanced(g.trunk, swayMat, palms), makeInstanced(g.crown, swayMat, palms));
   }
-  if (lamps.length) group.add(makeInstanced(lampGeometry(), litMat, lamps));
+  if (lamps.length) group.add(makeInstanced(lampGeometry(), materials.lit, lamps));
   if (!quality.shadows && contacts.length) {
     group.add(makeInstanced(new PlaneGeometry(1, 1).rotateX(-Math.PI / 2), makeBlobMaterial(), contacts.map((p) => ({ ...p, y: 0.1, sy: 1 })), false));
   }

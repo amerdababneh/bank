@@ -6,11 +6,11 @@ import {
 import {
   uniform, normalWorld, normalWorldGeometry, normalView, positionWorld, positionLocal, positionGeometry, positionViewDirection, vec2, vec3, vec4,
   mix, smoothstep, step, fract, dot, bool, sin, color, texture, float, shadow, output, cameraPosition, screenCoordinate,
-  time, instanceIndex, mx_noise_float, fog, rangeFogFactor, fwidth, mrt, reflectVector,
+  time, instanceIndex, mx_noise_float, fog, rangeFogFactor, fwidth, mrt, reflectVector, materialColor,
 } from 'three/tsl';
 
 export const SUN_DIR = new Vector3(-0.6, 0.7, 0.35).normalize(); // points toward the sun
-const uSun = uniform(SUN_DIR);
+export const uSun = uniform(SUN_DIR);
 // brighter, cleaner daylight (cool sky fill + clear sun); shadows are tinted lavender, not grey
 const SKY = vec3(0.66, 0.72, 0.82);
 const GROUND = vec3(0.56, 0.53, 0.48);
@@ -18,7 +18,7 @@ const SUN = vec3(0.64, 0.60, 0.50);
 const SHADOW_TINT = vec3(0.62, 0.64, 0.92);
 
 export const HAZE = '#dff3fb';
-const ZENITH = '#4fbcf0';
+export const ZENITH = '#4fbcf0';
 const SUN_GLOW = '#ffe2b0';
 
 // effect switches (0/1), flipped live by the ?fx panel
@@ -106,7 +106,10 @@ const swayPos = (h, amp) => {
 export function makeLit({ color: c = 0xffffff, map = null, vertexColors = false, shadows = true, transparent = false, opacity = 1, side, occlude = true, rim = false, sway = false, allFaces = false, shadowNode = null, glassy = false, grad = 0 } = {}) {
   const m = new MeshBasicNodeMaterial({ vertexColors, transparent, opacity, ...(side !== undefined && { side }) });
   const tex = map ? texture(map) : null;
-  let base = tex ? tex.rgb.mul(color(c)) : color(c);
+  // colour as a uniform (material.color), not a constant baked into the shader: materials that differ only
+  // in colour share one compiled program, which is most of the boot-time shader compile cost
+  m.color.set(c);
+  let base = tex ? tex.rgb.mul(materialColor) : materialColor;
   // grad: model height (m) for a bottom-dark -> top-light gradient with a warm tip (untextured plants)
   if (grad) base = vec3(base).mul(mix(vec3(0.8, 0.82, 0.86), vec3(1.15, 1.13, 1.0), smoothstep(0, grad, positionGeometry.y)));
   let lit = fakeSun(base);
@@ -138,29 +141,6 @@ export function makeLit({ color: c = 0xffffff, map = null, vertexColors = false,
 }
 
 // Animated sea: slow colour waves, sun sparkles and a wobbling foam line at the shore (z = shoreZ).
-// Cartoon sea (flat, unlit): drifting light contour lines over two noise layers, tiny white flecks and a
-// wobbling foam line at the shore (z = shoreZ). With the water effect off it is a plain flat colour.
-// land: the town rectangle x0..x1, z >= shoreZ; the foam band hugs its outline (north and side coasts)
-export function makeWater(hex, shoreZ, x0 = -1e5, x1 = 1e5) {
-  const m = new MeshBasicNodeMaterial();
-  const p = positionWorld.xz, base = color(new Color(hex));
-  const n1 = mx_noise_float(vec3(p.mul(0.09), time.mul(0.12)));
-  const n2 = mx_noise_float(vec3(p.mul(0.17).add(7.3), time.mul(0.18)));
-  const line = (n) => smoothstep(0, fwidth(n).mul(1.5).add(0.012), n.abs()).oneMinus(); // thin, pixel-stable
-  const lines = line(n1).max(line(n2).mul(0.6));
-  const light = base.mul(1.15).add(0.07);
-  let sea = mix(base, base.mul(0.92), smoothstep(0.15, 0.55, n1).mul(0.35)); // soft darker patches
-  sea = mix(sea, light, lines.mul(0.75));
-  const fleck = smoothstep(0.8, 0.86, mx_noise_float(vec3(p.mul(1.7), time.mul(0.9))));
-  sea = mix(sea, vec3(1), fleck);
-  const wobble = sin(time.mul(1.6).add(p.x.add(p.y).mul(0.35))).mul(0.35);
-  const dx = float(x0).sub(p.x).max(p.x.sub(x1)).max(0), dz = float(shoreZ).sub(p.y).max(0);
-  const foam = smoothstep(0.2, 1.4, dx.mul(dx).add(dz.mul(dz)).sqrt().add(wobble)).oneMinus(); // distance to the land
-  sea = mix(sea, vec3(1), foam.mul(0.85));
-  m.colorNode = vec4(mix(base, sea, fxU.water), 1);
-  return m;
-}
-
 export const makeUnlit = ({ vertexColors = true, color: c = 0xffffff } = {}) => new MeshBasicMaterial({ vertexColors, color: c });
 
 export function setupSky(scene) {
@@ -170,7 +150,7 @@ export function setupSky(scene) {
   // fog tinted warm toward the sun when haze is on
   const dir = positionWorld.sub(cameraPosition).normalize();
   const fogCol = mix(color(HAZE), color(SUN_GLOW), dir.dot(uSun).max(0).pow(3).mul(0.7).mul(fxU.haze));
-  scene.fogNode = fog(fogCol, rangeFogFactor(140, 480));
+  scene.fogNode = fog(fogCol, rangeFogFactor(220, 780));
   scene.background = new Color(HAZE); // fallback clear color
 }
 
