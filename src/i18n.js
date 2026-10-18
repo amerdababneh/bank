@@ -9,18 +9,6 @@ export function applyI18n(root = document) {
   document.title = t('app.name');
 }
 
-// Numbers: Arabic-Indic (١٢٣) or Latin (123) digits, a setting saved on the device.
-const DIGITS_KEY = 'mk_digits';
-let digits = 'arab';
-try { digits = localStorage.getItem(DIGITS_KEY) || 'arab'; } catch { /* ignore */ }
-let nf = null;
-export const getDigits = () => digits;
-export function setDigits(d) {
-  digits = d;
-  nf = null;
-  try { localStorage.setItem(DIGITS_KEY, d); } catch { /* ignore */ }
-}
-export function fmt(n) {
-  nf ??= new Intl.NumberFormat(digits === 'latn' ? 'ar-QA-u-nu-latn' : 'ar-QA-u-nu-arab');
-  return nf.format(n);
-}
+// Numbers: always Western digits (1 2 3) with Arabic formatting.
+const nf = new Intl.NumberFormat('ar-QA-u-nu-latn');
+export const fmt = (n) => nf.format(n);

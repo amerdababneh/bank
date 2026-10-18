@@ -109,9 +109,19 @@
 .tx.earn b, .tx.withdraw b { color: #1f8a4c; }
 .tx.deposit b, .tx.buy b, .tx.give b { color: #b3261e; }
 .atm-menu { display: flex; flex-direction: column; gap: 6px; }
-.set-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 4px; font-size: 20px; }
-.seg { display: flex; gap: 6px; }
-.seg .kbtn { min-height: 50px; font-size: 18px; padding: 6px 14px; }
+.set-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 10px; padding: 10px 4px; font-size: 20px; border-bottom: 1px solid rgba(0, 0, 0, 0.06); }
+.set-row > b { flex: none; }
+.seg { display: flex; flex-wrap: wrap; gap: 6px; }
+.seg .kbtn { min-height: 46px; font-size: 17px; padding: 6px 14px; }
+.seg .kbtn.on { outline: none; color: #fff; background: var(--c-primary); box-shadow: 0 3px 0 color-mix(in srgb, var(--c-primary) 60%, black); }
+.set-money { font-size: 18px; direction: ltr; }
+/* phones: label above its options, options share the row evenly */
+@media (max-width: 480px) {
+  .set-row { flex-direction: column; align-items: stretch; text-align: right; font-size: 18px; }
+  .seg { width: 100%; }
+  .seg .kbtn { flex: 1; min-width: 0; padding: 6px 8px; font-size: 16px; }
+  .set-energy, .set-badges, .set-money { align-self: flex-start; }
+}
 
 /* ---- HUD: brand mark (top-left), round outline buttons (top-right), phone card (bottom-left) */
 .hud-brand { position: fixed; top: calc(var(--safe-t) + 14px); left: calc(var(--safe-l) + 18px); z-index: 20; pointer-events: none; }
@@ -127,30 +137,6 @@
 }
 .round-btn svg { width: 26px; height: 26px; fill: none; stroke: #fff; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 .round-btn:active { transform: scale(0.92); }
-.hud-phone {
-  position: fixed;
-  left: calc(var(--safe-l) + 16px);
-  bottom: calc(var(--safe-b) + 16px);
-  z-index: 20;
-  width: 132px;
-  padding: 10px 10px 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  border-radius: 20px;
-  border: 5px solid var(--c-primary);
-  background: #f7fbfd;
-  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.28), inset 0 0 0 2px #fff;
-  transform: rotate(-5deg);
-  transform-origin: bottom left;
-}
-.ph-status { display: flex; align-items: center; gap: 6px; }
-.ph-row { display: flex; align-items: center; gap: 6px; padding: 4px 8px; border-radius: 12px; background: #fff; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12); font-size: 18px; }
-.ph-row .ic { font-size: 18px; }
-.ph-row b { color: var(--c-primary); }
-.ph-row.full b { color: #b3261e; }
-.ph-row.bump { animation: bump 0.35s ease; }
-@keyframes bump { 50% { transform: scale(1.18); } }
 .hud-goal { position: relative; width: 44px; height: 44px; flex: none; }
 .hud-goal.empty { opacity: 0.45; }
 .hud-goal svg { width: 100%; height: 100%; transform: rotate(-90deg); }
@@ -163,10 +149,10 @@
 .hud-energy i.off { filter: grayscale(1); opacity: 0.35; }
 .ph-sleep { min-height: 0; width: 34px; height: 34px; padding: 0; font-size: 18px; border-radius: 50%; animation: bump 1.2s ease-in-out infinite; }
 .ph-sleep[hidden] { display: none; }
-body.modal .hud-top, body.modal .hud-phone, body.modal .hud-brand,
-body.cine .hud-top, body.cine .hud-phone, body.cine .hud-brand { opacity: 0; pointer-events: none; }
-.hud-top, .hud-phone, .hud-brand { transition: opacity 0.2s; }
-@media (max-width: 520px) { .round-btn { width: 44px; height: 44px; } .round-btn svg { width: 22px; height: 22px; } .hud-phone { width: 118px; } }
+body.modal .hud-top, body.modal .hud-stats, body.modal .hud-app, body.modal .hud-brand,
+body.cine .hud-top, body.cine .hud-stats, body.cine .hud-app, body.cine .hud-brand { opacity: 0; pointer-events: none; }
+.hud-top, .hud-stats, .hud-app, .hud-brand { transition: opacity 0.2s; }
+@media (max-width: 520px) { .round-btn { width: 44px; height: 44px; } .round-btn svg { width: 22px; height: 22px; } }
 
 /* ---- coins flying to the wallet */
 .coin-fly {

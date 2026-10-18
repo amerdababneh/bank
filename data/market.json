@@ -3,6 +3,8 @@
  ],
  "door": "market_door",
  "exit": "market_exit",
+ "spawn": [ 1.8, -1
+ ],
  "colors": { "wall": "#eef3f1", "floor": "#d9dfdc", "accent": "#2e9b5f" },
  "pois": [ { "id": "market_checkout", "x": 2.4, "z": 4.8, "r": 1.6, "talk": { "x": 4.55, "y": 1.45, "z": 5.25 } }
  ],

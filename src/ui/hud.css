@@ -1,0 +1,169 @@
+/* HUD status bar (top centre), the 3D phone button (bottom-left) and the held-up phone app. */
+
+/* ---- status pills (top centre) */
+.hud-stats {
+  position: fixed;
+  top: calc(var(--safe-t) + 14px);
+  left: 50%;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transform: translateX(-50%);
+}
+.st-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 44px;
+  padding: 0 14px 0 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.18);
+  font-size: 19px;
+}
+.st-pill .ic { font-size: 20px; }
+.st-pill b { color: var(--c-primary); }
+.st-pill.full b { color: #b3261e; }
+.st-pill.bump { animation: bump 0.35s ease; }
+.hud-stats .hud-goal { width: 44px; height: 44px; }
+@media (max-width: 560px) { .hud-stats { display: none; } } /* phones: wallet/bank/goal live in settings */
+
+/* ---- the bank's kids app as a small 3D phone (bottom-left) */
+.hud-app {
+  position: fixed;
+  left: calc(var(--safe-l) + 22px);
+  bottom: calc(var(--safe-b) + 20px);
+  z-index: 20;
+  width: 74px;
+  height: 120px;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  box-shadow: none;
+  perspective: 300px;
+  animation: app-float 3s ease-in-out infinite;
+}
+.hud-app:active { transform: scale(0.93); }
+.ph-body {
+  position: absolute;
+  inset: 0;
+  border-radius: 16px;
+  background: linear-gradient(140deg, #f2f4fb, #c9cfe3);
+  box-shadow: 6px 8px 0 #8f97b8, 0 14px 18px rgba(0, 0, 0, 0.3); /* the "depth" side */
+  transform: rotateY(-18deg) rotateZ(-6deg);
+  padding: 6px;
+}
+.ph-screen {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 11px;
+  overflow: hidden;
+  background: linear-gradient(170deg, #ffffff 0 42%, #3d2fe0 42% 100%);
+}
+.ph-screen i { position: absolute; border-radius: 50%; }
+.ph-screen .a { width: 22px; height: 22px; right: 7px; top: 10px; background: #ff7a1a; }
+.ph-screen .b { width: 16px; height: 16px; right: 20px; top: 24px; background: #2ad38b; }
+.ph-screen .c { width: 26px; height: 9px; left: 8px; top: 14px; border-radius: 6px; background: #3d2fe0; }
+.ph-screen em { position: absolute; left: 9px; right: 9px; bottom: 12px; height: 16px; border-radius: 8px; background: #ff7a1a; }
+@keyframes app-float { 50% { translate: 0 -6px; } }
+
+/* ---- the held-up phone (Coastal World style): dim scene, hand from the bottom, white toolbar */
+.screen.phone-screen { background: rgba(26, 24, 60, 0.55); }
+.screen.phone-screen .screen-card { width: auto; max-height: none; background: none; border: 0; box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; overflow: visible; }
+.screen.phone-screen .screen-head { display: none; }
+.screen.phone-screen .screen-body { padding: 0; overflow: visible; }
+.phone-stage { position: relative; width: min(84vw, 380px); height: min(82vh, 640px); animation: phone-up 0.45s cubic-bezier(0.2, 0.9, 0.3, 1.15); }
+@keyframes phone-up { from { transform: translateY(70%) rotate(6deg); } }
+.phone {
+  position: absolute;
+  inset: 0 7% 4% 7%;
+  display: flex;
+  flex-direction: column;
+  border: 10px solid #e7b8c2;
+  border-radius: 34px;
+  background: #4fb4e8;
+  box-shadow: 10px 12px 0 #c9909d, 0 20px 40px rgba(0, 0, 0, 0.35);
+  overflow: hidden;
+  z-index: 2;
+}
+.ph-bar { display: flex; align-items: center; gap: 6px; margin: 10px; }
+.ph-tabs { flex: 1; min-width: 0; display: flex; justify-content: space-around; padding: 6px; border-radius: 999px; background: #fff; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18); }
+.ph-tab { flex: 0 1 46px; min-width: 34px; min-height: 0; width: 46px; height: 46px; padding: 0; font-size: 22px; border-radius: 50%; background: none; box-shadow: none; }
+.ph-tab.on { background: #dff0fb; }
+.ph-close { flex: none; min-width: 0; min-height: 0; width: 44px; height: 44px; line-height: 44px; padding: 0; border-radius: 50%; color: #fff; font-size: 20px; background: #2ec4a6; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); }
+.ph-page { position: relative; flex: 1; display: flex; flex-direction: column; gap: 8px; padding: 0 10px 12px; overflow: auto; }
+.ph-frame { flex: 1; width: 100%; min-height: 300px; border: 0; border-radius: 18px; background: #fff; }
+.ph-open { min-height: 48px; font-size: 17px; }
+.ph-card { display: grid; grid-template-columns: auto 1fr; grid-template-rows: auto auto; column-gap: 10px; align-items: center; padding: 10px 14px; border-radius: 18px; background: #fff; text-align: right; }
+.ph-card .ic { grid-row: span 2; font-size: 30px; }
+.ph-card small { opacity: 0.65; font-size: 14px; }
+.ph-card b { font-size: 20px; color: var(--c-primary); }
+.ph-badges { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+.ph-badge { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 12px 8px; border-radius: 18px; background: rgba(255, 255, 255, 0.65); font-size: 14px; text-align: center; }
+.ph-badge .ic { font-size: 34px; filter: grayscale(1); opacity: 0.6; }
+.ph-badge.got { background: #fff; }
+.ph-badge.got .ic { filter: none; opacity: 1; }
+
+/* cartoon hand: palm behind the phone, thumb on the left, fingertips on the right */
+.hand { position: absolute; pointer-events: none; }
+/* palm + arm: runs down past the bottom edge of the screen (cut off by the viewport) */
+.hand.back { left: 20%; right: 20%; bottom: -100vh; height: calc(46% + 100vh); border-radius: 46% 46% 30% 30% / 18% 18% 0 0; background: linear-gradient(90deg, #cf8f7b, #dda08b 45%, #c98571); z-index: 1; }
+.hand.front { inset: 0; z-index: 3; }
+.hand .thumb, .hand .finger { position: absolute; background: #e0a893; box-shadow: inset -6px -6px 0 rgba(0, 0, 0, 0.08); }
+.hand .thumb { left: -2%; top: 46%; width: 21%; height: 20%; border-radius: 50%; transform: rotate(-20deg); }
+.hand .finger { right: -3%; width: 19%; height: 12%; border-radius: 50%; }
+.hand .f0 { top: 30%; }
+.hand .f1 { top: 43%; }
+.hand .f2 { top: 56%; }
+.hand .f3 { top: 69%; width: 16%; }
+
+/* settings: energy + badges rows */
+.set-energy { font-size: 24px; letter-spacing: 4px; }
+.set-badges { display: flex; gap: 6px; font-size: 26px; }
+.set-badges span:not(.got) { filter: grayscale(1); opacity: 0.5; }
+
+/* in-game kids app (Junior style: white, deep purple, orange) */
+.jr { display: flex; flex-direction: column; gap: 10px; padding: 12px; border-radius: 22px; background: #fff; text-align: right; }
+.jr-head { display: flex; align-items: center; justify-content: space-between; }
+.jr-logo { font-size: 24px; font-weight: 800; color: #3d2fe0; direction: ltr; }
+.jr-avatar { width: 48px; height: 48px; display: grid; place-items: center; font-size: 26px; border-radius: 50%; background: #eef0ff; box-shadow: 0 0 0 3px #3d2fe0; }
+.jr-pot { position: relative; padding: 4px 0 6px; }
+.jr-pot h3 { margin: 0; font-size: 22px; color: #1b1450; }
+.jr-pot p { margin: 2px 0 8px; max-width: 64%; font-size: 13px; opacity: 0.75; }
+.jr-label { color: #ff7a1a; font-weight: 700; }
+.jr-balance { font-size: 30px; font-weight: 800; color: #1b1450; }
+.jr-jar { position: absolute; left: 4px; top: 8px; width: 74px; height: 96px; border-radius: 16px 16px 22px 22px; background: linear-gradient(180deg, #4a3cf0, #2a1fb5); box-shadow: inset 0 -10px 0 rgba(0, 0, 0, 0.12); }
+.jr-jar::before { content: ''; position: absolute; left: 26px; top: -14px; width: 22px; height: 22px; border-radius: 50%; background: #ff7a1a; box-shadow: 18px -6px 0 -3px #2ad38b; }
+.jr-jar::after { content: ''; position: absolute; left: 14px; right: 14px; top: 34px; height: 8px; border-radius: 4px; background: #6ee7ff; box-shadow: 0 16px 0 #6ee7ff, 0 32px 0 #6ee7ff; }
+.jr-tx h4 { margin: 4px 0 6px; font-size: 18px; color: #1b1450; }
+.jr-row { display: flex; justify-content: space-between; padding: 9px 12px; margin-bottom: 6px; border-radius: 14px; box-shadow: 0 1px 6px rgba(27, 20, 80, 0.12); font-size: 15px; }
+.jr-row b.in { color: #1f8a4c; }
+.jr-row b.out { color: #3d2fe0; }
+.jr-empty { opacity: 0.6; font-size: 14px; }
+.jr-get { min-height: 54px; font-size: 18px; color: #fff; background: linear-gradient(180deg, #ff9a3d, #ff7a1a); box-shadow: 0 4px 0 #c75a0d; }
+
+/* mini landing page for the kids app */
+.lp { display: flex; flex-direction: column; gap: 10px; text-align: right; }
+.lp-hero { padding: 16px 14px 14px; border-radius: 22px; color: #fff; background: linear-gradient(160deg, #3d2fe0, #1b1450); }
+.lp-hero .jr-logo { color: #fff; }
+.lp-hero h3 { margin: 6px 0 4px; font-size: 22px; line-height: 1.35; }
+.lp-hero p { margin: 0 0 12px; font-size: 14px; opacity: 0.85; }
+.lp-stores { display: grid; grid-template-columns: repeat(auto-fit, minmax(118px, 1fr)); gap: 8px; direction: ltr; } /* 2 columns when they fit, else stacked */
+.lp-store { width: 100%; min-width: 0; min-height: 0; height: 40px; padding: 4px 8px; display: flex; align-items: center; justify-content: center; gap: 6px; color: #fff; background: #000; border: 1px solid #555; border-radius: 10px; box-shadow: none; }
+.lp-store svg { width: 18px; height: 20px; flex: none; }
+.lp-store span { display: flex; flex-direction: column; align-items: flex-start; line-height: 1.05; direction: rtl; }
+.lp-store small { font-size: 9px; opacity: 0.85; }
+.lp-store b { font-size: 13px; direction: ltr; white-space: nowrap; }
+.lp > h4 { margin: 6px 4px 0; font-size: 18px; color: #1b1450; }
+.lp-feat { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 16px; background: #fff; font-size: 15px; box-shadow: 0 1px 6px rgba(27, 20, 80, 0.1); }
+.lp-feat .ic { width: 38px; height: 38px; flex: none; display: grid; place-items: center; font-size: 20px; border-radius: 50%; background: #eef0ff; }
+.lp-card { position: relative; padding: 14px 14px 14px 120px; border-radius: 22px; background: linear-gradient(140deg, #ffefe2, #ffd9bd); display: flex; flex-direction: column; gap: 2px; min-height: 96px; justify-content: center; }
+.lp-card b { font-size: 18px; color: #1b1450; }
+.lp-card small { font-size: 13px; opacity: 0.75; }
+.lp-visa { position: absolute; left: 14px; top: 50%; width: 92px; height: 60px; margin-top: -30px; border-radius: 10px; background: linear-gradient(135deg, #6a5cff, #3d2fe0); box-shadow: 0 6px 12px rgba(61, 47, 224, 0.35); transform: rotate(-8deg); }
+.lp-visa::after { content: 'VISA'; position: absolute; right: 8px; bottom: 6px; font: 800 12px/1 sans-serif; color: #fff; }
+@media (max-width: 420px) { .ph-tab { height: 38px; font-size: 18px; } .ph-tabs { padding: 4px; } }

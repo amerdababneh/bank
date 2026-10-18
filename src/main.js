@@ -22,6 +22,7 @@ import { loadAnims, loadFbx } from './anims.js';
 import { buildInterior, interiorModelNames, interiorNpcNames } from './world/interior.js';
 import { createBoats, boatModelNames } from './world/boats.js';
 import { createLandmarks } from './world/landmark.js';
+import { createBillboards } from './world/billboards.js';
 import bankLayout from '../data/bank.json';
 import marketLayout from '../data/market.json';
 import { initDoors } from './world/doors.js';
@@ -31,6 +32,7 @@ import { initHud } from './ui/hud.js';
 import { openBank } from './ui/bank.js';
 import { openAtm } from './ui/atm.js';
 import { openSettings, initSettings } from './ui/settings.js';
+import { openPhoneApp } from './ui/phoneapp.js';
 import { on } from './bus.js';
 import { dialogGates } from './ui/dialog.js';
 import { startJob } from './jobs/runner.js';
@@ -129,6 +131,9 @@ async function boot() {
   const world = buildTown({ town: townData, tiles, brand, quality, models });
   scene.add(world.group);
   scene.add(createLandmarks(townData.landmarks)); // QIB HQ + Doha Tower on the island
+  const ads = createBillboards(townData.billboards, brand); // QIB ad boards + one on the bank wall
+  scene.add(ads.group);
+  world.colliders.push(...ads.colliders);
   const boats = createBoats(townData.boats, models); // parked + sailing ships around the town
   scene.add(boats.group);
   updaters.push((dt, now) => boats.update(dt, now));
@@ -167,7 +172,7 @@ async function boot() {
 
   // P4 UI: HUD, bank (after the teller conversation), ATM, settings; full-screen screens pause the 3D
   initSettings();
-  const hud = initHud({ host: $('ui'), econ: game.econ, items, rig: game.rig, onSettings: () => openSettings({ onDigits: () => hud.draw() }) });
+  const hud = initHud({ host: $('ui'), econ: game.econ, items, rig: game.rig, onApp: () => openPhoneApp({ econ: game.econ, items }), onSettings: () => openSettings({ econ: game.econ }) });
   on('dialog:end', ({ next }) => {
     if (next === 'open_account' || next === 'bank') openBank({ econ: game.econ, items, bankName: brand.bankName });
     else if (next?.startsWith('job:')) startJob({ econ: game.econ, jobs, jobId: next.slice(4) });

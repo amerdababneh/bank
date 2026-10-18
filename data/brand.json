@@ -6,7 +6,7 @@
     "secondary": "#e5f1f7",
     "accent": "#df7a00"
   },
-  "logo": "brand/logo.svg",
+  "logo": "icons/QIB%20Logo.svg",
   "flag": {
     "colors": [
       "#ffffff",
@@ -14,5 +14,7 @@
     ],
     "points": 9,
     "band": 0.3
-  }
+  },
+  "appUrl": "https://play.google.com/store/apps/details?id=com.qib.junior",
+  "appStoreUrl": "https://apps.apple.com/qa/search?term=QIB%20Junior"
 }

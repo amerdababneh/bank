@@ -1,6 +1,6 @@
 {
   "tile": 8,
-  "note": "Map rows north (sea, skyline island) to south. b = bridge to the island. H = gentle walkable hills. crossings: [x, z] road tiles with a zebra crossing. islands: far decoration {x, z, r, hill}. flags: [x, z] world positions of extra flag poles (corniche, bridge ends, island shore). landmarks: island towers {type: qib|doha, x, z, ry, h, clear}.",
+  "note": "Map rows north (sea, skyline island) to south. b = bridge to the island. H = gentle walkable hills. crossings: [x, z] road tiles with a zebra crossing. islands: far decoration {x, z, r, hill}. flags: [x, z] world positions of extra flag poles (corniche, bridge ends, island shore). landmarks: island towers {type: qib|doha, x, z, ry, h, clear}. billboards: ads {image, x, z, ry (deg), w, h, pole (0 = on a wall), y}.",
   "map": [
     "SSSSSSSSSSSS",
     "~~~~~~~~b~~~",
@@ -204,6 +204,85 @@
       "z": 4,
       "h": 60,
       "clear": 10
+    }
+  ],
+  "billboards": [
+    {
+      "image": "ads/ad-finance.jpg",
+      "x": 55.75,
+      "z": 430,
+      "ry": 90,
+      "w": 5.6,
+      "h": 3.2,
+      "pole": 0,
+      "y": 2.6
+    },
+    {
+      "image": "ads/ad-junior.jpg",
+      "x": 84,
+      "z": 420,
+      "ry": 0,
+      "w": 2.4,
+      "h": 4.3,
+      "pole": 1.2
+    },
+    {
+      "image": "ads/ad-almeera.jpg",
+      "x": 68,
+      "z": 452,
+      "ry": 180,
+      "w": 2.8,
+      "h": 3.5,
+      "pole": 1.2
+    },
+    {
+      "image": "ads/ad-finance.jpg",
+      "x": 48,
+      "z": 474,
+      "ry": 180,
+      "w": 9,
+      "h": 5.1,
+      "pole": 4.5
+    },
+    {
+      "image": "ads/ad-finance.jpg",
+      "x": 40.25,
+      "z": 430,
+      "ry": -90,
+      "w": 5.6,
+      "h": 3.2,
+      "pole": 0,
+      "y": 2.6
+    },
+    {
+      "image": "ads/ad-junior.jpg",
+      "x": 43.6,
+      "z": 424.35,
+      "ry": 180,
+      "w": 2.6,
+      "h": 4.6,
+      "pole": 0,
+      "y": 2.4
+    },
+    {
+      "image": "ads/ad-finance.jpg",
+      "x": 48,
+      "z": 424.35,
+      "ry": 180,
+      "w": 4.4,
+      "h": 2.5,
+      "pole": 0,
+      "y": 3.4
+    },
+    {
+      "image": "ads/ad-almeera.jpg",
+      "x": 52.4,
+      "z": 424.35,
+      "ry": 180,
+      "w": 3,
+      "h": 3.8,
+      "pole": 0,
+      "y": 2.6
     }
   ]
 }

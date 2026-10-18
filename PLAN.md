@@ -248,3 +248,21 @@ Using QIB's name and look in a **private pitch to QIB** is normal. Don't share t
 
 ### White-label reuse (where the profit is)
 Every client after the first costs about 10–15 h: new `brand.json` and logo, `ar.json` wording, a map tweak, prices. Target banks, Islamic finance institutions, schools and malls.
+
+---
+
+## Optimisation pass (later) — measure with `?debug` (fps, draw calls) and the `[boot]` console timings before/after
+
+Frame rate (cheap phones first):
+1. **Instance repeated models** — parked cars, Kenney buildings/houses, island skyscrapers, billboard frames, flag poles → one InstancedMesh per model part via `instanceModel()` (src/world/scatter.js). Sailing boats stay separate. Target: −100..150 draw calls.
+2. **Texture noise instead of procedural noise** — sea (3× `mx_noise_float` per pixel, water.js) and the cloud-shadow term in `fakeSun()` (light.js) sample one small tileable noise texture.
+3. **Un-force the demo tier** — `DEMO_TIER` (quality.js) / `DEMO_DEFAULTS` (fx.js): auto tier again, or keep high but drop bloom + kid realtime shadow on low/mid devices.
+4. **Frustum culling** — instanced batches use `frustumCulled = false`; split the merged town batch into a few regions with bounds so off-screen parts are skipped.
+5. **LOD for the far island** — skyline + landmarks are ~400 m away: low-detail Kenney models or plain boxes.
+
+Loading time:
+6. **Defer interior assets** — load bank/market furniture GLBs + NPC FBX after the town is playable (their shader compile is already deferred).
+7. **Compress models** — gltf-transform (meshopt + texture compression) on public/models; the loader already has the meshopt decoder.
+8. **Fewer shader variants** — merge makeLit switches (rim, sway, grad, glassy, occlude, shadows) where possible to cut compile count.
+
+Already done: cached/shared converted materials, colour as uniform (shared programs), interiors compile in background, shadows baked once, dynamic resolution, low tier 30 fps + no shadow map, pause when hidden.

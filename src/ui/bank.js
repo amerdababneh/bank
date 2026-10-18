@@ -5,7 +5,7 @@ import { t, tf, fmt } from '../i18n.js';
 import { el, button, pinPad, amountPicker, toast, toastError } from './widgets.js';
 import { openScreen } from './screens.js';
 
-const TABS = ['deposit', 'withdraw', 'balance', 'goal', 'statement'];
+const TABS = ['deposit', 'withdraw', 'balance', 'goal', 'statement', 'pin'];
 const TX_SIGN = { earn: '+', withdraw: '+', deposit: '−', buy: '−', give: '−' };
 
 export function openBank({ econ, items, bankName }) {
@@ -66,6 +66,22 @@ export function openBank({ econ, items, bankName }) {
   }
 
   const PAGES = {
+    // forgot / change the PIN: done here with the teller, new PIN entered twice
+    pin(page) {
+      el('p', 'hint', page, t('pin.forgotHint'));
+      el('p', 'tip', page, '🔒 ' + t('open.tip'));
+      const q = el('p', 'step-q', page, t('pin.new'));
+      let first = null;
+      const pad = pinPad(page, (p) => {
+        if (!first) { first = p; q.textContent = t('pin.new2'); return pad.reset(); }
+        if (p !== first) { toast(t('pin.mismatch'), 'err'); first = null; q.textContent = t('pin.new'); return pad.shake(); }
+        const res = econ.resetPin(p);
+        if (!res.ok) return toastError(res.error);
+        toast(t('pin.changed'), 'ok');
+        page.replaceChildren();
+        PAGES.pin(page);
+      });
+    },
     deposit(page) {
       el('p', 'hint', page, tf('balance.walletLine', { n: fmt(econ.state.wallet) }));
       const pick = amountPicker(page, () => econ.state.wallet, () => 'NO_CASH');

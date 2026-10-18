@@ -118,3 +118,13 @@ test('every successful action emits an econ event', () => {
   off();
   assert.deepEqual(seen, ['openAccount', 'deposit']);
 });
+
+test('resetPin: needs an account and 4 digits, then the new PIN works', () => {
+  assert.equal(econ().resetPin('1111').error, ERR.NO_ACCOUNT);
+  const e = withAccount({ wallet: 10 });
+  e.deposit(10);
+  assert.equal(e.resetPin('12').error, ERR.BAD_PIN);
+  assert.ok(e.resetPin('4321').ok);
+  assert.equal(e.withdraw(5, '1234').error, ERR.BAD_PIN);
+  assert.ok(e.withdraw(5, '4321').ok);
+});

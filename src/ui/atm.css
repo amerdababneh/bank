@@ -48,10 +48,10 @@
   box-shadow: 0 0 0 4px #0c0f14, 0 0 26px rgba(140, 190, 255, 0.35);
   direction: rtl;
 }
-.atm-head { height: var(--head-h); display: flex; align-items: center; gap: 10px; padding: 0 14px; background: #fff; }
+.atm-head { height: var(--head-h); display: flex; align-items: center; gap: 10px; padding: 0 14px; background: var(--c-primary); } /* white logo */
 .atm-logo { height: 34px; }
-.atm-bank { flex: 1; font-size: 18px; color: var(--c-primary); }
-.atm-help { font-size: 13px; color: #6b7280; }
+.atm-bank { flex: 1; font-size: 18px; color: #fff; }
+.atm-help { font-size: 13px; color: rgba(255, 255, 255, 0.75); }
 .atm-stage { position: relative; height: var(--stage-h); color: #f2f6ff; }
 .atm-mid {
   position: absolute;
@@ -144,11 +144,37 @@
 .atm-cash.out::after { animation: atm-cash 1.6s ease-out; }
 @keyframes atm-cash { 20% { opacity: 1; } 60% { transform: translate(-50%, 6px); opacity: 1; } to { transform: translate(-50%, 12px); opacity: 0; } }
 
+/* small screens: taller display that grows with its content; side keys hidden; options become
+   full-width buttons in two columns under the content; one-line header */
 @media (max-width: 600px) {
-  .atm-face { grid-template-columns: 34px min(72vw, 560px) 34px; gap: 6px; padding: 30px 8px 42px; }
-  .atm-key { height: 28px; }
-  .atm-opt { font-size: 13px; padding: 0 6px; gap: 4px; }
-  .atm-mid { inset: 0 26%; }
+  .atm-face { grid-template-columns: min(90vw, 440px); padding: 30px 10px 44px; }
+  .atm-brand { left: 22px; }
+  .atm-keys { display: none; }
+  .atm-head { gap: 8px; padding: 0 10px; }
+  .atm-help { display: none; }
+  .atm-bank { font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .atm-logo { height: 28px; }
+  .atm-stage {
+    height: auto;
+    min-height: min(52vh, 420px);
+    max-height: 70vh;
+    overflow-y: auto;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-areas: 'mid mid' 'a b';
+    align-content: start;
+    gap: 10px;
+    padding: 14px 12px 16px;
+  }
+  .atm-mid, .atm-mid:has(.pinpad), .atm-mid:has(.amount) { position: static; inset: auto; grid-area: mid; padding: 0; }
+  .atm-opts { position: static; width: auto; padding: 0; gap: 8px; justify-content: flex-start; pointer-events: auto; }
+  .atm-opts.left { grid-area: a; }
+  .atm-opts.right { grid-area: b; }
+  .atm-slot { height: auto; }
+  .atm-slot:empty { display: none; }
+  .atm-opt { width: 100%; height: 46px; justify-content: space-between; font-size: 15px; }
+  .atm-mid .pin-keys .key { height: 46px; }
+  .atm-mid .chips { max-width: 100%; }
 }
 
 /* compact PIN pad and amount chips inside the ATM display */

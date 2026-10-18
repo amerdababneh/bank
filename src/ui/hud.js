@@ -1,5 +1,5 @@
 // HUD in the Coastal World style: brand mark top-left, round outline buttons top-right (sound,
-// camera view, settings) and a tilted "phone" card bottom-left with wallet, bank, goal and energy.
+// camera view, settings), status icons at the top and a small 3D phone (the bank's kids app) bottom-left.
 // Redraws on bus 'econ'; coins fly into the wallet when money arrives. Badges show as toasts.
 import { on } from '../bus.js';
 import { t, fmt } from '../i18n.js';
@@ -7,6 +7,7 @@ import { el, button, toast } from './widgets.js';
 import { setMuted } from '../audio.js';
 import { asset } from '../paths.js';
 import brand from '../../data/brand.json';
+import './hud.css';
 
 const RING = 2 * Math.PI * 20; // goal ring circumference (r = 20 in a 48x48 svg)
 const MUTE_KEY = 'mk_mute';     // shared with the settings screen
@@ -17,8 +18,10 @@ const ICON = {
   menu: '<svg viewBox="0 0 24 24"><path d="M5 8h14M7 12h10M9.5 16h5"/></svg>',
 };
 const muted = () => { try { return localStorage.getItem(MUTE_KEY) === '1'; } catch { return false; } };
+const ringSvg = '<svg viewBox="0 0 48 48"><circle cx="24" cy="24" r="20" class="track"/>'
+  + `<circle cx="24" cy="24" r="20" class="fill" stroke-dasharray="${RING}" stroke-dashoffset="${RING}"/></svg><span></span>`;
 
-export function initHud({ host, econ, items, rig, onSettings }) {
+export function initHud({ host, econ, items, rig, onSettings, onApp }) {
   // ---- brand mark (top-left)
   const mark = el('div', 'hud-brand', host);
   const logo = el('img', '', mark);
@@ -43,45 +46,43 @@ export function initHud({ host, econ, items, rig, onSettings }) {
   round('camera', 'ui.camera', () => rig.setMode(rig.mode === 'top' ? 'follow' : 'top'));
   round('menu', 'hud.settings', onSettings);
 
-  // ---- phone card (bottom-left)
-  const phone = el('div', 'hud-phone', host);
-  const row = (icon, label) => {
-    const r = el('div', 'ph-row', phone);
+  // ---- status icons (top centre): wallet, bank, goal
+  const stats = el('div', 'hud-stats', host);
+  const pill = (icon, label) => {
+    const r = el('div', 'st-pill', stats);
     r.setAttribute('aria-label', t(label));
     el('span', 'ic', r, icon);
     return el('b', '', r);
   };
-  const status = el('div', 'ph-status', phone);
-  const goal = el('div', 'hud-goal', status);
-  goal.setAttribute('aria-label', t('hud.goal'));
-  goal.innerHTML = `<svg viewBox="0 0 48 48"><circle cx="24" cy="24" r="20" class="track"/><circle cx="24" cy="24" r="20" class="fill" stroke-dasharray="${RING}" stroke-dashoffset="${RING}"/></svg><span></span>`;
-  const ringFill = goal.querySelector('.fill'), goalIcon = goal.querySelector('span');
-  const energy = el('div', 'hud-energy', status);
-  energy.setAttribute('aria-label', t('hud.energy'));
-  const bolts = [0, 1, 2].map(() => el('i', '', energy, '⚡'));
-  // out of energy: a moon button starts the next day
-  const sleep = button(status, '🌙', () => { econ.nextDay(); toast(t('day.new'), 'ok'); }, 'ph-sleep');
-  sleep.setAttribute('aria-label', t('day.sleep'));
-  const wallet = row('🪙', 'hud.wallet');
+  const wallet = pill('🪙', 'hud.wallet');
   const walletRow = wallet.parentElement;
-  const bank = row('🏦', 'hud.bank');
+  const bank = pill('🏦', 'hud.bank');
+  const goal = el('div', 'hud-goal', stats);
+  goal.setAttribute('aria-label', t('hud.goal'));
+  goal.innerHTML = ringSvg;
+  const ringFill = goal.querySelector('.fill'), goalIcon = goal.querySelector('span');
+  // energy, the next-day button and badges live in the settings screen for now (settings.js)
+
+  // ---- the bank's kids app as a little 3D phone (bottom-left); tap -> phone held up on screen
+  const app = button(host, '', onApp, 'hud-app');
+  app.setAttribute('aria-label', t('hud.app'));
+  app.innerHTML = '<span class="ph-body"><span class="ph-screen"><i class="a"></i><i class="b"></i><i class="c"></i><em></em></span></span>';
 
   function draw() {
     const s = econ.state;
     wallet.textContent = fmt(s.wallet);
     bank.textContent = s.account.opened ? fmt(s.bank) : '—';
     walletRow.classList.toggle('full', s.wallet >= s.walletCap);
-    bolts.forEach((b, i) => b.classList.toggle('off', i >= s.energy));
-    sleep.hidden = s.energy > 0;
     const g = s.goal && items[s.goal];
     goal.classList.toggle('empty', !g);
     goalIcon.textContent = g ? g.icon : '🎯';
     ringFill.style.strokeDashoffset = String(g ? RING * (1 - Math.min(1, s.bank / g.price)) : RING);
   }
 
-  // a few coins arc from the screen centre into the wallet row
+  // a few coins arc from the screen centre into the wallet icon
   function coinFly(count) {
-    const to = walletRow.getBoundingClientRect();
+    const vis = walletRow.getClientRects().length > 0; // hidden on phones -> fly to the settings button
+    const to = (vis ? walletRow : top.lastChild).getBoundingClientRect();
     for (let i = 0; i < Math.min(8, count); i++) {
       const c = el('i', 'coin-fly', document.body, '🪙');
       c.style.setProperty('--dx', `${to.left + to.width / 2 - innerWidth / 2}px`);

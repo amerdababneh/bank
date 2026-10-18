@@ -62,7 +62,7 @@ html, body {
 #loader.done { opacity: 0; pointer-events: none; }
 #loader h1 { margin: 0; font-size: clamp(30px, 8vw, 54px); font-weight: 800; }
 #loader p { margin: 0; font-size: 18px; opacity: 0.85; }
-#ld-logo { width: 96px; height: 96px; object-fit: contain; }
+#ld-logo { width: min(288px, 70vw); height: 288px; max-height: 32vh; object-fit: contain; } /* 3x the old 96px, capped on small screens */
 #ld-short { font-size: 20px; font-weight: 700; letter-spacing: 3px; color: var(--c-accent); direction: ltr; }
 .ld-bar {
   width: min(70vw, 360px);

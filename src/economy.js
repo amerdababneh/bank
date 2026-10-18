@@ -55,6 +55,14 @@ export function createEconomy(data, saved = null) {
       return done('openAccount');
     },
 
+    // Forgot the PIN: a new one is chosen at the bank teller (in person), never at the ATM.
+    resetPin(pin) {
+      if (!s.account.opened) return fail(ERR.NO_ACCOUNT);
+      if (!/^\d{4}$/.test(String(pin))) return fail(ERR.BAD_PIN);
+      s.account.pin = String(pin);
+      return done('resetPin');
+    },
+
     // Can this job be done right now? (check before starting it, so a finished job is never lost)
     canEarn(jobId) {
       const job = data.jobs[jobId];

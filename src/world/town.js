@@ -154,9 +154,9 @@ export function buildTown({ town, tiles, brand, quality, models = {} }) {
       // tiles.modelYaw: whole pack; d.modelYaw: this tile only (e.g. 180 = keep the model, put door/sign behind)
       fit = placeModel(model, r, ry + (((tiles.modelYaw ?? 0) + (d.modelYaw ?? 0)) * Math.PI) / 180);
       const text = d.sign ? t(d.sign) : d.build === 'souq' ? t(`sign.souq.${1 + Math.floor(hash(r.cz, r.cx) * 5)}`) : null;
-      // signAt { y, front, w, h, side } and signStyle { bg, fg, border } override the default placement/look
-      const sa = d.signAt ?? {};
-      if (text) c.sign(text, sa.w ?? Math.min(5, fit.w * 0.6), sa.h ?? 1.1, sa.side ?? 0, sa.y ?? Math.min(4, fit.h * 0.55), fit.front + (sa.front ?? 0.15), d.signStyle);
+      for (const sa of [{ ...d.signAt, text, style: d.signStyle }, ...(d.signs ?? [])]) { // signAt/signStyle + extra signs
+        if (sa.text || sa.style?.image) c.sign(sa.text ?? '', sa.w ?? Math.min(5, fit.w * 0.6), sa.h ?? 1.1, sa.side ?? 0, sa.y ?? Math.min(4, fit.h * 0.55), fit.front + (sa.front ?? 0.15), sa.style);
+      }
     } else BUILDERS[d.build]?.(c, d, r);
     if (d.palm) c.palm(0, 0);
 
@@ -245,6 +245,6 @@ export function buildTown({ town, tiles, brand, quality, models = {} }) {
 
   const bounds = computeBounds(town, tiles, true); // walkable area
   const groundAt = (x, z) => (grounds[def(Math.floor(x / T), Math.floor(z / T))?.ground]?.top ?? 0) + heightAt(x, z);
-  const walkableAt = (x, z) => !!def(Math.floor(x / T), Math.floor(z / T))?.walk;
+  const walkableAt = (x, z) => { const d = def(Math.floor(x / T), Math.floor(z / T)); return !!d && !d.void && !d.water; }; // only sea/off-map blocks; buildings use colliders
   return { group, colliders, pois, bounds, spawn, groundAt, walkableAt, anchors, flags, water: built.getObjectByName('water'), size: { w: MW, d: MD } };
 }

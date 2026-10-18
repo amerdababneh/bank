@@ -74,17 +74,18 @@ export function openAtm({ econ, rig, player, anchors }) {
           el('small', '', card, s.account.name);
           card.onclick = () => { card.classList.add('in'); setTimeout(askPin, 650); };
         },
+        left: [null, null, null, { label: t('atm.exit'), fn: close }], // no card inserted yet: just leave
       });
     }
 
     function askPin() {
-      view({ title: t('pin.enter'), content(mid) {
+      view({ title: t('pin.enter'), lines: [t('pin.atmForgot')], content(mid) {
         const pad = pinPad(mid, (p) => {
           if (p !== s.account.pin) { toastError('BAD_PIN'); return pad.shake(); }
           pin = p;
           menu();
         });
-      } });
+      }, left: [null, null, null, { label: t('atm.exit'), fn: eject }] }); // card is in: give it back
     }
 
     const exit = { label: t('atm.exit'), fn: eject };
